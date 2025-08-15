@@ -18,15 +18,6 @@ const CONFIG = {
 	DIONT_PORT: 60540
 }
 
-NucleusDaemon.isRedisRunning = () => {
-    return new Promise((resolve) => {
-        const socket = net.createConnection(CONFIG.REDIS_PORT, "127.0.0.1")
-            .on("connect", () => { socket.destroy(); resolve(true); })
-            .on("error", () => resolve(false));
-    });
-};
-
-
 const NucleusDaemon = {
 	server: null,
 	redisClient: null,
@@ -36,7 +27,16 @@ NucleusDaemon.diont = require('diont')({
 	broadcast: true
 });
 
-NucleusDaemon.handleAdvertisements = function() {
+
+NucleusDaemon.isRedisRunning = () => {
+    return new Promise((resolve) => {
+        const socket = net.createConnection(CONFIG.REDIS_PORT, "127.0.0.1")
+            .on("connect", () => { socket.destroy(); resolve(true); })
+            .on("error", () => resolve(false));
+    });
+};
+
+NucleusDaemon.handleAdvertisements = function () {
 	// ======
 	// Listen for announcements and renouncements in services
 	// ======
