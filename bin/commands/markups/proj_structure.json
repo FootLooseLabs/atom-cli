@@ -1,0 +1,34 @@
+{
+	"structure":[
+		{
+			"name": "src",
+			"children": [
+				{
+					"name": "component",
+					"children": [
+						{
+							"name": "main.js"
+						}
+					]
+				},
+				{
+					"name": "lexicon",
+					"children": [
+						{
+							"name": "main.js"
+						}
+					]
+				},
+				{
+					"name": "interface.js"
+				}
+			]
+		},
+		{
+			"name": "package.json"
+		},
+		{
+			"name": ".gitignore"
+		}
+	]
+}
