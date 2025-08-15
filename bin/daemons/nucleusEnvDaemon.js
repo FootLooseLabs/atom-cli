@@ -1,6 +1,7 @@
 //PENDING - restart all atom.interfaces running - upon Nucleus RESTART
+process.title = "Atom.NucleusDaemon";
 
-var events = require("events");
+// const events = require("events");
 
 const RedisServer = require('redis-server');
 // var diont = require('diont')();
@@ -10,13 +11,21 @@ const redis = require("redis");
 
 const chalk = require('chalk');
 
+const net = require("net");
+
 const CONFIG = {
 	REDIS_PORT: 6379,
 	DIONT_PORT: 60540
 }
 
+NucleusDaemon.isRedisRunning = () => {
+    return new Promise((resolve) => {
+        const socket = net.createConnection(CONFIG.REDIS_PORT, "127.0.0.1")
+            .on("connect", () => { socket.destroy(); resolve(true); })
+            .on("error", () => resolve(false));
+    });
+};
 
-process.title = "Atom.NucleusDaemon";
 
 const NucleusDaemon = {
 	server: null,
@@ -59,33 +68,61 @@ NucleusDaemon.handleAdvertisements = function() {
 }
 
 
-NucleusDaemon.startRedisServer = () => {
+// NucleusDaemon.startRedisServer = () => {
 
-	return new Promise((resolve, reject) => {
-		try{	
-			NucleusDaemon.server = new RedisServer(CONFIG.REDIS_PORT);
-			NucleusDaemon.server.open((err) => {
-			  if (err) {
-			  	console.log(`Error: ${err}`);
-			    reject(err);
-			    return;
-			  }
-			  console.log("Info: ", "started Atom.Nucleus redis server");
-			  resolve(NucleusDaemon.server);
-			  return;
-			});
-		}catch(e){
-			console.log(`Error: ${e}`);
-		}
-	});
-	// if(!NucleusDaemon.server){return;}
-	// NucleusDaemon.server.open((err) => {
-	// 	if (err != null) {
-	//   		throw `Error: ${err}`;
-	// 	}
-	// 	console.log("Info: started Atom.Nucleus Redis Server");
-	// });
-}
+// 	return new Promise((resolve, reject) => {
+// 		try{	
+// 			NucleusDaemon.server = new RedisServer(CONFIG.REDIS_PORT);
+// 			NucleusDaemon.server.open((err) => {
+// 			  if (err) {
+// 			  	console.log(`Error: ${err}`);
+// 			    reject(err);
+// 			    return;
+// 			  }
+// 			  console.log("Info: ", "started Atom.Nucleus redis server");
+// 			  resolve(NucleusDaemon.server);
+// 			  return;
+// 			});
+// 		}catch(e){
+// 			console.log(`Error: ${e}`);
+// 		}
+// 	});
+// 	// if(!NucleusDaemon.server){return;}
+// 	// NucleusDaemon.server.open((err) => {
+// 	// 	if (err != null) {
+// 	//   		throw `Error: ${err}`;
+// 	// 	}
+// 	// 	console.log("Info: started Atom.Nucleus Redis Server");
+// 	// });
+// }
+
+
+NucleusDaemon.startRedisServer = async () => {
+    const running = await NucleusDaemon.isRedisRunning();
+    if (running) {
+        console.log(`Info: Redis already running on port ${CONFIG.REDIS_PORT}, skipping spawn.`);
+        return;
+    }
+
+    return new Promise((resolve, reject) => {
+        try {
+            NucleusDaemon.server = new RedisServer(CONFIG.REDIS_PORT);
+            NucleusDaemon.server.open((err) => {
+                if (err) {
+                    console.log(`Error: ${err}`);
+                    reject(err);
+                    return;
+                }
+                console.log("Info: started Atom.Nucleus internal Redis server");
+                resolve(NucleusDaemon.server);
+            });
+        } catch (e) {
+            console.log(`Error: ${e}`);
+            reject(e);
+        }
+    });
+};
+
 
 
 NucleusDaemon.startRedisClient = () => {
