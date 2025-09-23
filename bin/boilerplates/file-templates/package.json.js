@@ -1,17 +1,17 @@
-var packagejsonMarkup = (opt) => {
-return `{
-    "name": "${opt.name}",
+const generatePackageJson = (componentSpec) => {
+  return `{
+    "name": "${componentSpec.name}",
     "version": "1.0.0",
-    "description": "${opt.head.description}",
-    "main": "index.js",
+    "description": "${componentSpec.description || "Atom component"}",
+    "main": "src/interface.js",
     "config": {
-        "port": "${opt.config.port}"
+        "port": "${componentSpec.config.port}"
     },
-    "scripts": {        
+    "scripts": {
         "update-s3": "aws s3 sync dist/ s3://$npm_package_config_s3 --profile $npm_package_config_iam",
         "update-cdn": "aws cloudfront update-distribution --id $npm_package_config_cf_id --default-root-object index.html --profile $npm_package_config_iam",
         "force_cdn_invalidation": "aws cloudfront create-invalidation --distribution-id $npm_package_config_cf_id --paths '/*' --profile $npm_package_config_iam",
-        
+
         "build-cmps": "./node_modules/.bin/rollup -c",
         "build": "gulp buildAll",
         "dev": "watch 'npm run build && node run.js $npm_package_config_port' src",
@@ -49,10 +49,7 @@ return `{
     "dependencies": {
         "muffin": "github:FootLooseLabs/element"
     }
-}
-`
-}
+}`;
+};
 
-module.exports = {
-    packagejsonMarkup
-}
+module.exports = generatePackageJson;

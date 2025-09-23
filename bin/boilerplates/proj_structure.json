@@ -1,0 +1,70 @@
+{
+  "structure": [
+    {
+      "name": "src",
+      "children": [
+        {
+          "name": "component",
+          "children": [
+            {
+              "name": "main.js"
+            },
+            {
+              "name": "db.js"
+            },
+            {
+              "name": "services",
+              "children": []
+            },
+            {
+              "name": "lifecycles",
+              "children": []
+            },
+            {
+              "name": "operators",
+              "children": []
+            },
+            {
+              "name": "models",
+              "children": []
+            }
+          ]
+        },
+        {
+          "name": "lexicon",
+          "children": [
+            {
+              "name": "main.js"
+            }
+          ]
+        },
+        {
+          "name": "utils",
+          "children": [
+            {
+              "name": "index.js"
+            }
+          ]
+        },
+        {
+          "name": "interface.js"
+        },
+        {
+          "name": "interfaceEvents.js"
+        }
+      ]
+    },
+    {
+      "name": "package.json"
+    },
+    {
+      "name": ".gitignore"
+    },
+    {
+      "name": ".env"
+    },
+    {
+      "name": ".env-sample"
+    }
+  ]
+}
