@@ -42,23 +42,18 @@ The Atom CLI is the companion tool for the [Atom.js Framework](https://github.co
 ### Prerequisites
 
 - **Node.js**: Version 12 or higher
-- **Redis Server**: For service discovery
-- **PM2**: Process manager (installed automatically)
-
-### Install from NPM
-
-```bash
-npm install -g atom-nucleus
-```
 
 ### Install from Source
 
 ```bash
 git clone <repository-url>
 cd atom-cli
-npm install
-npm link
+./install.sh
 ```
+
+> **Note:** This script will also automatically install the following dependencies:
+*   **Redis Server**: Used for service discovery
+*   **PM2**: Used for process management
 
 ## Quick Start
 
