@@ -8,7 +8,10 @@ const chalk = require('chalk');
  */
 class DeploymentRegistry {
   constructor(registryPath) {
-    this.registryPath = registryPath || path.join(__dirname, '../config/deployment-registry.yaml');
+    // Priority: 1. Explicit path, 2. Environment variable, 3. Default
+    this.registryPath = registryPath ||
+                        process.env.ATOM_REGISTRY_PATH ||
+                        path.join(__dirname, '../config/deployment-registry.yaml');
     this.registry = null;
     this.load();
   }
@@ -230,6 +233,272 @@ class DeploymentRegistry {
    */
   productExists(productName) {
     return !!this.registry.products[productName];
+  }
+
+  /**
+   * Save registry to YAML file
+   */
+  save() {
+    try {
+      const yamlContent = yaml.dump(this.registry, {
+        indent: 2,
+        lineWidth: -1,
+        noRefs: true
+      });
+      fs.writeFileSync(this.registryPath, yamlContent, 'utf8');
+    } catch (error) {
+      throw new Error(`Failed to save registry: ${error.message}`);
+    }
+  }
+
+  /**
+   * Add a new service to registry
+   */
+  addService(serviceName, config) {
+    if (this.serviceExists(serviceName)) {
+      throw new Error(`Service "${serviceName}" already exists in registry`);
+    }
+
+    if (!config.repo) {
+      throw new Error('Service must have a "repo" field');
+    }
+
+    if (!config.branch) {
+      throw new Error('Service must have a "branch" field');
+    }
+
+    this.registry.services[serviceName] = {
+      repo: config.repo,
+      branch: config.branch
+    };
+
+    if (config.env) {
+      this.registry.services[serviceName].env = config.env;
+    }
+
+    this.save();
+  }
+
+  /**
+   * Remove a service from registry
+   */
+  removeService(serviceName) {
+    if (!this.serviceExists(serviceName)) {
+      throw new Error(`Service "${serviceName}" not found in registry`);
+    }
+
+    // Check if service is used by any products
+    const products = this.getProductsUsingService(serviceName);
+    if (products.length > 0) {
+      throw new Error(`Cannot remove service "${serviceName}" - it is used by products: ${products.join(', ')}`);
+    }
+
+    delete this.registry.services[serviceName];
+    this.save();
+  }
+
+  /**
+   * Update service configuration
+   */
+  updateService(serviceName, updates) {
+    if (!this.serviceExists(serviceName)) {
+      throw new Error(`Service "${serviceName}" not found in registry`);
+    }
+
+    const service = this.registry.services[serviceName];
+
+    if (updates.repo) service.repo = updates.repo;
+    if (updates.branch) service.branch = updates.branch;
+    if (updates.env) service.env = updates.env;
+
+    this.save();
+  }
+
+  /**
+   * Add a new product to registry
+   */
+  addProduct(productName, config) {
+    if (this.productExists(productName)) {
+      throw new Error(`Product "${productName}" already exists in registry`);
+    }
+
+    if (!config.servers || !Array.isArray(config.servers) || config.servers.length === 0) {
+      throw new Error('Product must have at least one server');
+    }
+
+    // Validate servers
+    config.servers.forEach((server, idx) => {
+      if (!server.hostname) {
+        throw new Error(`Server ${idx} is missing "hostname" field`);
+      }
+      if (!server.path) {
+        throw new Error(`Server ${idx} is missing "path" field`);
+      }
+    });
+
+    this.registry.products[productName] = {
+      servers: config.servers,
+      services: config.services || []
+    };
+
+    if (config.env) {
+      this.registry.products[productName].env = config.env;
+    }
+
+    this.save();
+  }
+
+  /**
+   * Remove a product from registry
+   */
+  removeProduct(productName) {
+    if (!this.productExists(productName)) {
+      throw new Error(`Product "${productName}" not found in registry`);
+    }
+
+    delete this.registry.products[productName];
+    this.save();
+  }
+
+  /**
+   * Update product configuration
+   */
+  updateProduct(productName, updates) {
+    if (!this.productExists(productName)) {
+      throw new Error(`Product "${productName}" not found in registry`);
+    }
+
+    const product = this.registry.products[productName];
+
+    if (updates.servers) {
+      // Validate servers
+      updates.servers.forEach((server, idx) => {
+        if (!server.hostname) {
+          throw new Error(`Server ${idx} is missing "hostname" field`);
+        }
+        if (!server.path) {
+          throw new Error(`Server ${idx} is missing "path" field`);
+        }
+      });
+      product.servers = updates.servers;
+    }
+
+    if (updates.env) product.env = updates.env;
+
+    this.save();
+  }
+
+  /**
+   * Link a service to a product
+   */
+  linkServiceToProduct(serviceName, productName, serviceConfig = null) {
+    if (!this.serviceExists(serviceName)) {
+      throw new Error(`Service "${serviceName}" not found in registry`);
+    }
+
+    if (!this.productExists(productName)) {
+      throw new Error(`Product "${productName}" not found in registry`);
+    }
+
+    const product = this.registry.products[productName];
+
+    // Check if already linked
+    const alreadyLinked = product.services.some(s => {
+      if (typeof s === 'string') {
+        return s === serviceName;
+      } else if (typeof s === 'object') {
+        return Object.keys(s)[0] === serviceName;
+      }
+      return false;
+    });
+
+    if (alreadyLinked) {
+      throw new Error(`Service "${serviceName}" is already linked to product "${productName}"`);
+    }
+
+    // Add service to product
+    if (serviceConfig && serviceConfig.env) {
+      // Link with custom env
+      const serviceEntry = {};
+      serviceEntry[serviceName] = { env: serviceConfig.env };
+      product.services.push(serviceEntry);
+    } else {
+      // Simple link
+      product.services.push(serviceName);
+    }
+
+    this.save();
+  }
+
+  /**
+   * Unlink a service from a product
+   */
+  unlinkServiceFromProduct(serviceName, productName) {
+    if (!this.serviceExists(serviceName)) {
+      throw new Error(`Service "${serviceName}" not found in registry`);
+    }
+
+    if (!this.productExists(productName)) {
+      throw new Error(`Product "${productName}" not found in registry`);
+    }
+
+    const product = this.registry.products[productName];
+
+    // Find and remove service
+    const originalLength = product.services.length;
+    product.services = product.services.filter(s => {
+      if (typeof s === 'string') {
+        return s !== serviceName;
+      } else if (typeof s === 'object') {
+        return Object.keys(s)[0] !== serviceName;
+      }
+      return true;
+    });
+
+    if (product.services.length === originalLength) {
+      throw new Error(`Service "${serviceName}" is not linked to product "${productName}"`);
+    }
+
+    this.save();
+  }
+
+  /**
+   * Search registry for keyword
+   */
+  search(keyword) {
+    const results = {
+      services: [],
+      products: []
+    };
+
+    const lowerKeyword = keyword.toLowerCase();
+
+    // Search services
+    for (const [serviceName, serviceConfig] of Object.entries(this.registry.services)) {
+      if (serviceName.toLowerCase().includes(lowerKeyword) ||
+          serviceConfig.repo.toLowerCase().includes(lowerKeyword) ||
+          serviceConfig.branch.toLowerCase().includes(lowerKeyword)) {
+        results.services.push(serviceName);
+      }
+    }
+
+    // Search products
+    for (const [productName, productConfig] of Object.entries(this.registry.products)) {
+      if (productName.toLowerCase().includes(lowerKeyword)) {
+        results.products.push(productName);
+      } else {
+        // Search in servers
+        const matchesServer = productConfig.servers.some(server =>
+          server.hostname.toLowerCase().includes(lowerKeyword) ||
+          server.path.toLowerCase().includes(lowerKeyword)
+        );
+        if (matchesServer) {
+          results.products.push(productName);
+        }
+      }
+    }
+
+    return results;
   }
 }
 

@@ -1,109 +1,79 @@
-# Deployment Registry
-# Central configuration for all services and products
-
-# Define all services
 services:
   Mailer_MicroService:
-    repo: git@github.com:FootLooseLabs/Mailer_MicroService.git
-    branch: master
-
+    repo: https://github.com/Vritti-ai/mailer-service/
+    branch: dev
   api-gateway-service:
-    repo: git@github.com:FootLooseLabs/api-gateway-service.git
+    repo: https://github.com/Vritti-ai/api-gateway-service.git
     branch: master
-
   common-auditor-agent:
-    repo: git@github.com:FootLooseLabs/common-auditor-agent.git
+    repo: git@github.com:FootLooseLabs/payment-handeller-agent.git
     branch: master
-
   common_auth_agent:
-    repo: git@github.com:FootLooseLabs/common_auth_agent.git
+    repo: git@github.com:Vritti-ai/common-auth-agent.git
     branch: master
-
   crm-proposal-manager:
-    repo: git@github.com:FootLooseLabs/crm-proposal-manager.git
+    repo: https://github.com/Vritti-ai/crm-proposal-manager.git
     branch: master
-
   entity-lifecycle-manager:
-    repo: git@github.com:FootLooseLabs/entity-lifecycle-manager.git
+    repo: https://github.com/Vritti-ai/entity-lifecycle-manager.git
     branch: master
-
   file_manager_utils:
-    repo: git@github.com:FootLooseLabs/file_manager_utils.git
+    repo: git@github.com:Vritti-ai/file-manager-utils.git
     branch: master
-
   ideation-notes-manager:
-    repo: git@github.com:FootLooseLabs/ideation-notes-manager.git
+    repo: https://github.com/Vritti-ai/ideation-notes-manager.git
     branch: master
-
   product-package-manager:
-    repo: git@github.com:FootLooseLabs/product-package-manager.git
+    repo: https://github.com/Vritti-ai/product-package-manager.git
     branch: master
-
   prompt-executor-agent:
-    repo: git@github.com:FootLooseLabs/prompt-executor-agent.git
+    repo: git@github.com:apratimankur/abstraction-ai-prompter-agent.git
     branch: master
-
   rtc-webrequest-handler:
-    repo: git@github.com:FootLooseLabs/rtc-webrequest-handler.git
+    repo: git@github.com:Vritti-ai/rtc.webrequest-handler.git
     branch: rpi
-
   session-manager-agent:
-    repo: git@github.com:FootLooseLabs/session-manager-agent.git
+    repo: https://github.com/Vritti-ai/session-manager-agent.git
     branch: master
-
   user-account-manager:
-    repo: git@github.com:FootLooseLabs/user-account-manager.git
+    repo: https://github.com/Vritti-ai/user-account-manager.git
     branch: master
-
   vritti-composer:
-    repo: git@github.com:FootLooseLabs/vritti-composer.git
+    repo: git@github.com:Vritti-ai/content-generator.git
     branch: master
-
   vritti-composer-export:
-    repo: git@github.com:FootLooseLabs/vritti-composer-export.git
+    repo: https://github.com/Vritti-ai/composer-export.git
     branch: master
-
   vritti-composer-journal:
-    repo: git@github.com:FootLooseLabs/vritti-composer-journal.git
+    repo: https://github.com/Vritti-ai/vritti-composer-journal.git
     branch: master
-
   vritti-control-space-manager:
-    repo: git@github.com:FootLooseLabs/vritti-control-space-manager.git
+    repo: https://github.com/Vritti-ai/control-space-manager.git
     branch: master
-
   vritti-ideator:
-    repo: git@github.com:FootLooseLabs/vritti-ideator.git
+    repo: git@github.com:Vritti-ai/mind-manager-agent.git
     branch: master
-
   vritti-ideator-unrefined:
-    repo: git@github.com:FootLooseLabs/vritti-ideator-unrefined.git
+    repo: https://github.com/Vritti-ai/ideator-unrefined.git
     branch: master
-
   vritti-lifecycle-orchestrator:
-    repo: git@github.com:FootLooseLabs/vritti-lifecycle-orchestrator.git
+    repo: https://github.com/Vritti-ai/vritti-lifecycle-orchestrator.git
     branch: master
-
   vritti-organizer:
-    repo: git@github.com:FootLooseLabs/vritti-organizer.git
+    repo: https://github.com/Vritti-ai/vritti-organiser.git
     branch: master
-
   vritti-registry-manager:
-    repo: git@github.com:FootLooseLabs/vritti-registry-manager.git
+    repo: https://github.com/Vritti-ai/registry-manager.git
     branch: master
-
   vritti-vectorizer:
-    repo: git@github.com:FootLooseLabs/vritti-vectorizer.git
+    repo: https://github.com/Vritti-ai/vritti-vectorizer.git
     branch: master
-
   webhooks-manager:
-    repo: git@github.com:FootLooseLabs/webhooks-manager.git
+    repo: https://github.com/Vritti-ai/rtc-webhooks-manager.git
     branch: master
-
   iden-engine-core:
     repo: git@github.com:FootLooseLabs/iden-engine-core.git
     branch: master
-
-# Define products and their infrastructure
 products:
   wity:
     servers:
@@ -134,8 +104,7 @@ products:
       - vritti-registry-manager
       - vritti-vectorizer
       - webhooks-manager
-
-  gcp-vritti-dogfooding:
+  vritti-dogfooding:
     servers:
       - hostname: gcp-vritti-dogfooding
         path: /home/ankur/agents/

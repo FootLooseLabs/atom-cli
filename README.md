@@ -140,6 +140,37 @@ This interactive tool allows you to:
 
 **See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment documentation.**
 
+### Registry Management Commands (NEW)
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `-registry list` | List summary | `atom -registry list` |
+| `-registry list --services` | List all services | `atom -registry list --services` |
+| `-registry list --products` | List all products | `atom -registry list --products` |
+| `-registry search --keyword <word>` | Search registry | `atom -registry search --keyword auth` |
+| `-registry show --name <name>` | Show details | `atom -registry show --name wity` |
+| `-registry add-service` | Add new service | `atom -registry add-service --name svc --repo url --branch main` |
+| `-registry add-product` | Add new product | `atom -registry add-product --name prod --server host --path /path` |
+| `-registry link` | Link service to product | `atom -registry link --service svc --product prod` |
+| `-registry unlink` | Unlink service | `atom -registry unlink --service svc --product prod` |
+| `-registry remove-service` | Remove service | `atom -registry remove-service --name svc` |
+| `-registry remove-product` | Remove product | `atom -registry remove-product --name prod` |
+| `-registry update-service` | Update service | `atom -registry update-service --name svc --branch dev` |
+| `-registry update-product` | Update product | `atom -registry update-product --name prod --path /new/path` |
+
+**See [REGISTRY.md](REGISTRY.md) for complete registry management documentation.**
+
+---
+
+## Configuration
+
+Atom CLI supports configuration via environment variables:
+
+- **`ATOM_REGISTRY_PATH`** - Override default registry file location
+- **`--git-remote`** - Specify git remote preference for autoprepare
+
+**See [CONFIGURATION.md](CONFIGURATION.md) for complete configuration guide.**
+
 ## Detailed Usage
 
 ### Starting the Nucleus Daemon (`atom -s`)

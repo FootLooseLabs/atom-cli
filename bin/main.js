@@ -31,7 +31,20 @@ program
   .option("--list", "list deployment information")
   .option("--restart", "restart service after deployment using PM2")
   .option("--dry-run", "show what would be deployed without executing")
-  .option("--parallel", "deploy to multiple servers in parallel");
+  .option("--parallel", "deploy to multiple servers in parallel")
+  .option("-registry <operation>", "manage deployment registry")
+  .option("--name <name>", "name of service or product")
+  .option("--repo <url>", "git repository URL")
+  .option("--branch <branch>", "git branch name")
+  .option("--server <hostname>", "server hostname")
+  .option("--path <path>", "deployment path on server")
+  .option("--ssh-key <path>", "SSH key path")
+  .option("--username <user>", "SSH username")
+  .option("--service <service>", "service name for link/unlink")
+  .option("--services", "show only services")
+  .option("--products", "show only products")
+  .option("--keyword <keyword>", "search keyword")
+  .option("--git-remote <remotes>", "git remote preference (comma-separated, e.g. upstream,origin)");
 
 if (process.argv.length <= 2) {
   program.help();
@@ -118,4 +131,27 @@ if (program.Deploy !== undefined) {
     // This is a deployment operation
     require("./commands/deploy_service")(program.Deploy, opts);
   }
+}
+
+if (program.Registry !== undefined) {
+  const opts = program.opts();
+  const operation = program.Registry;
+
+  // Pass operation and options to registry manager
+  require("./commands/manage_registry")(operation, {
+    name: opts.name,
+    repo: opts.repo,
+    branch: opts.branch,
+    server: opts.server,
+    path: opts.path,
+    sshKey: opts.sshKey,
+    username: opts.username,
+    service: opts.service,
+    product: opts.product,
+    services: opts.services,
+    products: opts.products,
+    keyword: opts.keyword,
+    gitRemote: opts.gitRemote,
+    debug: opts.debug
+  });
 }
