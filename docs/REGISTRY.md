@@ -10,28 +10,30 @@ The registry management commands provide a CLI interface to:
 - Update configurations
 - Search and list registry contents
 - View detailed information
+- Auto-discover running services
 
-All operations update the `bin/config/deployment-registry.yaml` file automatically.
+All operations update the deployment registry YAML file automatically.
 
+### Custom Registry Path
 
-### Custom Registry Path Example
+Set `ATOM_REGISTRY_PATH` environment variable to use a custom registry location:
 
-  # 1. Create directory
-  mkdir -p /home/vritti/envs/atom
+```bash
+# 1. Create directory
+mkdir -p /home/ankur/flabs/envs/atom
 
-  # 2. Copy current registry there
-  cp bin/config/deployment-registry.yaml /home/vritti/envs/atom/deployment-registry.yaml
+# 2. Copy current registry there
+cp bin/config/deployment-registry.yaml /home/ankur/flabs/envs/atom/deployment-registry.yaml
 
-  # 3. Add to ~/.bashrc
-  echo 'export ATOM_REGISTRY_PATH=/home/vritti/envs/atom/deployment-registry.yaml' >> ~/.bashrc
+# 3. Add to ~/.bashrc
+echo 'export ATOM_REGISTRY_PATH=/home/ankur/flabs/envs/atom/deployment-registry.yaml' >> ~/.bashrc
 
-  # 4. Apply it now
-  export ATOM_REGISTRY_PATH=/home/vritti/envs/atom/deployment-registry.yaml
+# 4. Apply it now
+export ATOM_REGISTRY_PATH=/home/ankur/flabs/envs/atom/deployment-registry.yaml
 
-  # 5. Test it works
-  atom -registry list
-
-
+# 5. Test it works
+atom registry list
+```
 
 ---
 
@@ -39,40 +41,44 @@ All operations update the `bin/config/deployment-registry.yaml` file automatical
 
 ```bash
 # List
-atom -registry list                                    # Summary
-atom -registry list --services                         # All services
-atom -registry list --products                         # All products
+atom registry list                                    # Summary
+atom registry list --services                         # All services
+atom registry list --products                         # All products
 
 # Search
-atom -registry search --keyword <keyword>              # Search registry
+atom registry search --keyword <keyword>              # Search registry
 
 # Show Details
-atom -registry show --name <service-or-product>        # Show details
+atom registry show --name <service-or-product>        # Show details
 
 # Add
-atom -registry add-service --name <name> \
+atom registry add-service --name <name> \
   --repo <url> --branch <branch>                       # Add service
 
-atom -registry add-product --name <name> \
+atom registry add-product --name <name> \
   --server <host> --path <path>                        # Add product
 
 # Link/Unlink
-atom -registry link --service <service> \
+atom registry link --service <service> \
   --product <product>                                  # Link service to product
 
-atom -registry unlink --service <service> \
+atom registry unlink --service <service> \
   --product <product>                                  # Unlink
 
 # Remove
-atom -registry remove-service --name <name>            # Remove service
-atom -registry remove-product --name <name>            # Remove product
+atom registry remove-service --name <name>            # Remove service
+atom registry remove-product --name <name>            # Remove product
 
 # Update
-atom -registry update-service --name <name> \
+atom registry update-service --name <name> \
   [--repo <url>] [--branch <branch>]                   # Update service
 
-atom -registry update-product --name <name> \
+atom registry update-product --name <name> \
   [--server <host>] [--path <path>]                    # Update product
+
+# Auto-discover
+atom registry autoprepare --product <name>            # Auto-discover services
+atom registry ap --product <name>                     # Short form
 ```
 
 ---
@@ -83,7 +89,7 @@ atom -registry update-product --name <name> \
 
 #### List Summary
 ```bash
-atom -registry list
+atom registry list
 ```
 
 Shows count of services and products.
@@ -96,12 +102,12 @@ Services: 25
 Products: 2
 
 Use --services or --products to see details
-Or use: atom -deploy --list
+Or use: atom deploy --list
 ```
 
 #### List All Services
 ```bash
-atom -registry list --services
+atom registry list --services
 ```
 
 Shows all services with repository and branch.
@@ -123,7 +129,7 @@ Services: 25
 
 #### List All Products
 ```bash
-atom -registry list --products
+atom registry list --products
 ```
 
 Shows all products with server count and service count.
@@ -147,7 +153,7 @@ Products: 2
 ### Search Command
 
 ```bash
-atom -registry search --keyword <keyword>
+atom registry search --keyword <keyword>
 ```
 
 Search for services or products by keyword. Searches in:
@@ -160,7 +166,7 @@ Search for services or products by keyword. Searches in:
 
 **Example:**
 ```bash
-atom -registry search --keyword auth
+atom registry search --keyword auth
 ```
 
 **Output:**
@@ -177,7 +183,7 @@ Services:
 ### Show Command
 
 ```bash
-atom -registry show --name <service-or-product>
+atom registry show --name <service-or-product>
 ```
 
 Show detailed information about a service or product.
@@ -185,7 +191,7 @@ Show detailed information about a service or product.
 #### Show Service
 
 ```bash
-atom -registry show --name common_auth_agent
+atom registry show --name common_auth_agent
 ```
 
 **Output:**
@@ -201,7 +207,7 @@ Used by products: wity, gcp-vritti-dogfooding
 #### Show Product
 
 ```bash
-atom -registry show --name wity
+atom registry show --name wity
 ```
 
 **Output:**
@@ -226,7 +232,7 @@ Services: 24
 #### Add Service
 
 ```bash
-atom -registry add-service --name <service-name> \
+atom registry add-service --name <service-name> \
   --repo <git-url> \
   --branch <branch-name>
 ```
@@ -235,7 +241,7 @@ Adds a new service to the registry. Will prompt for confirmation.
 
 **Example:**
 ```bash
-atom -registry add-service --name my-new-service \
+atom registry add-service --name my-new-service \
   --repo git@github.com:FootLooseLabs/my-new-service.git \
   --branch master
 ```
@@ -259,7 +265,7 @@ Branch: master
 #### Add Product
 
 ```bash
-atom -registry add-product --name <product-name> \
+atom registry add-product --name <product-name> \
   --server <hostname> \
   --path <deployment-path> \
   [--ssh-key <key-path>] \
@@ -270,7 +276,7 @@ Adds a new product to the registry. Will prompt for confirmation.
 
 **Example:**
 ```bash
-atom -registry add-product --name staging \
+atom registry add-product --name staging \
   --server staging.example.com \
   --path /opt/microservices/ \
   --ssh-key ~/.ssh/staging_key \
@@ -302,14 +308,14 @@ Username: deploy
 #### Link Service to Product
 
 ```bash
-atom -registry link --service <service-name> --product <product-name>
+atom registry link --service <service-name> --product <product-name>
 ```
 
 Links an existing service to an existing product. Will prompt for confirmation.
 
 **Example:**
 ```bash
-atom -registry link --service my-new-service --product staging
+atom registry link --service my-new-service --product staging
 ```
 
 **Output:**
@@ -329,14 +335,14 @@ Linking: my-new-service → staging
 #### Unlink Service from Product
 
 ```bash
-atom -registry unlink --service <service-name> --product <product-name>
+atom registry unlink --service <service-name> --product <product-name>
 ```
 
 Removes the link between a service and product. Does not delete the service or product.
 
 **Example:**
 ```bash
-atom -registry unlink --service my-new-service --product staging
+atom registry unlink --service my-new-service --product staging
 ```
 
 **Output:**
@@ -356,14 +362,14 @@ atom -registry unlink --service my-new-service --product staging
 #### Remove Service
 
 ```bash
-atom -registry remove-service --name <service-name>
+atom registry remove-service --name <service-name>
 ```
 
 Removes a service from the registry. Will prompt for confirmation.
 
 **Example:**
 ```bash
-atom -registry remove-service --name my-old-service
+atom registry remove-service --name my-old-service
 ```
 
 **Output:**
@@ -382,14 +388,14 @@ Warning: Removing service "my-old-service"
 #### Remove Product
 
 ```bash
-atom -registry remove-product --name <product-name>
+atom registry remove-product --name <product-name>
 ```
 
 Removes a product from the registry. Will prompt for confirmation.
 
 **Example:**
 ```bash
-atom -registry remove-product --name old-staging
+atom registry remove-product --name old-staging
 ```
 
 **Output:**
@@ -411,7 +417,7 @@ Warning: Removing product "old-staging"
 #### Update Service
 
 ```bash
-atom -registry update-service --name <service-name> \
+atom registry update-service --name <service-name> \
   [--repo <new-url>] \
   [--branch <new-branch>]
 ```
@@ -420,7 +426,7 @@ Updates service configuration. Can update repo URL, branch, or both.
 
 **Example:**
 ```bash
-atom -registry update-service --name my-service --branch develop
+atom registry update-service --name my-service --branch develop
 ```
 
 **Output:**
@@ -440,7 +446,7 @@ New branch: develop
 #### Update Product
 
 ```bash
-atom -registry update-product --name <product-name> \
+atom registry update-product --name <product-name> \
   [--server <new-host>] \
   [--path <new-path>] \
   [--ssh-key <new-key>] \
@@ -451,7 +457,7 @@ Updates product configuration. Updates the first server in the product.
 
 **Example:**
 ```bash
-atom -registry update-product --name staging --path /new/path/
+atom registry update-product --name staging --path /new/path/
 ```
 
 **Output:**
@@ -470,69 +476,175 @@ New path: /new/path/
 
 ---
 
+### Auto-discover Commands
+
+#### Autoprepare (Full)
+
+```bash
+atom registry autoprepare --product <product-name> [--git-remote <remotes>]
+atom registry ap --product <product-name> [--git-remote <remotes>]
+```
+
+Auto-discovers Atom services running on your machine via PM2, extracts git repository info, and updates the registry.
+
+**Example:**
+```bash
+atom registry autoprepare --product my-dev-machine
+```
+
+**What it does:**
+1. Scans all PM2 processes
+2. Identifies Atom services (via package.json or directory structure)
+3. Extracts git repository URL and current branch
+4. Compares with registry and categorizes as: new, update needed, or already correct
+5. Prompts for confirmation
+6. Updates registry and optionally creates/updates product
+
+**Output:**
+```
+🔍 Auto-preparing registry from running services...
+
+Scanning 26 PM2 processes...
+
+  ✓ common_auth_agent
+    Path: /home/ubuntu/agents/common_auth_agent
+    Repo: git@github.com:FootLooseLabs/common_auth_agent.git
+    Branch: master
+  ✓ api-gateway-service
+    Path: /home/ubuntu/agents/api-gateway-service
+    Repo: git@github.com:FootLooseLabs/api-gateway-service.git
+    Branch: master
+  ...
+
+Found 14 services:
+
+New services (will be added):
+  ✓ new-service-1
+    git@github.com:org/new-service-1.git (branch: master)
+
+Existing services (will be updated):
+  ↻ service-2
+    Repo: git@github.com:old-org/service-2.git
+       → git@github.com:new-org/service-2.git
+
+Already correct:
+  • service-3
+  • service-4
+
+Summary:
+  To add: 1
+  To update: 1
+  Already correct: 12
+
+? Apply these changes to registry? (Y/n)
+
+📝 Updating registry...
+
+  ✓ Added: new-service-1
+  ✓ Updated: service-2
+
+✓ Registry updated successfully!
+  Added: 1 services
+  Updated: 1 services
+```
+
+#### Git Remote Preference
+
+When you have multiple git remotes (e.g., `origin` for your fork, `upstream` for main repo), you can specify which to prefer:
+
+```bash
+atom registry ap --product dev --git-remote upstream,origin
+```
+
+**How it works:**
+- Checks remotes in order: upstream first, then origin
+- Uses the first one found
+- Falls back to any remote if neither specified ones exist
+- Shows which remote was used: `Branch: master (remote: upstream)`
+
+**Use cases:**
+- Fork-based workflow: Use upstream instead of your personal fork
+- Multiple remotes: Prioritize company GitLab over GitHub
+- Team consistency: Ensure everyone uses same canonical repo
+
+---
+
 ## Workflow Examples
 
 ### Example 1: Add New Service and Deploy
 
 ```bash
 # 1. Add service to registry
-atom -registry add-service --name payment-service \
+atom registry add-service --name payment-service \
   --repo git@github.com:FootLooseLabs/payment-service.git \
   --branch master
 
 # 2. Link to products
-atom -registry link --service payment-service --product wity
-atom -registry link --service payment-service --product staging
+atom registry link --service payment-service --product wity
+atom registry link --service payment-service --product staging
 
 # 3. Deploy
-atom -deploy payment-service --product staging --dry-run
-atom -deploy payment-service --product staging
+atom deploy payment-service --product staging --dry-run
+atom deploy payment-service --product staging
 ```
 
 ### Example 2: Add New Product Environment
 
 ```bash
 # 1. Add product
-atom -registry add-product --name production \
+atom registry add-product --name production \
   --server prod.example.com \
   --path /opt/services/ \
   --ssh-key ~/.ssh/prod_key
 
 # 2. Link existing services
-atom -registry link --service common_auth_agent --product production
-atom -registry link --service api-gateway-service --product production
+atom registry link --service common_auth_agent --product production
+atom registry link --service api-gateway-service --product production
 
 # 3. Verify
-atom -registry show --name production
+atom registry show --name production
 
 # 4. Deploy all services
-atom -deploy --product production --all-services
+atom deploy --product production --all-services
 ```
 
 ### Example 3: Update Service Branch
 
 ```bash
 # 1. Update branch
-atom -registry update-service --name my-service --branch feature-xyz
+atom registry update-service --name my-service --branch feature-xyz
 
 # 2. Deploy with new branch
-atom -deploy my-service --product staging
+atom deploy my-service --product staging
 ```
 
 ### Example 4: Search and Cleanup
 
 ```bash
 # 1. Find old services
-atom -registry search --keyword old
+atom registry search --keyword old
 
 # 2. Check what uses them
-atom -registry show --name old-service
+atom registry show --name old-service
 
 # 3. Unlink if necessary
-atom -registry unlink --service old-service --product staging
+atom registry unlink --service old-service --product staging
 
 # 4. Remove
-atom -registry remove-service --name old-service
+atom registry remove-service --name old-service
+```
+
+### Example 5: Auto-discover from Running Services
+
+```bash
+# 1. Auto-discover all running services
+atom registry ap --product my-dev-machine
+
+# 2. Verify what was added
+atom registry list --services
+
+# 3. Deploy to another environment
+atom deploy common_auth_agent --product staging
 ```
 
 ---
@@ -554,7 +666,7 @@ The YAML file is updated atomically. Consider version controlling it:
 
 ```bash
 cd ~/atom-cli
-git add bin/config/deployment-registry.yaml
+git add $ATOM_REGISTRY_PATH
 git commit -m "Updated registry: added staging product"
 git push
 ```
@@ -575,7 +687,7 @@ Error: Service "my-service" already exists in registry
 ```
 Error: Service "unknown-service" not found in registry
 ```
-**Solution:** Check service name with `atom -registry list --services`.
+**Solution:** Check service name with `atom registry list --services`.
 
 **Cannot remove service in use:**
 ```
@@ -597,17 +709,17 @@ Registry management and deployment work together:
 
 ```bash
 # 1. Manage registry
-atom -registry add-service --name my-service \
+atom registry add-service --name my-service \
   --repo git@github.com:org/my-service.git \
   --branch master
 
-atom -registry link --service my-service --product wity
+atom registry link --service my-service --product wity
 
 # 2. Deploy
-atom -deploy my-service --product wity
+atom deploy my-service --product wity
 
 # 3. Verify
-atom -deploy my-service --list
+atom deploy my-service --list
 ```
 
 ---
@@ -617,44 +729,57 @@ atom -deploy my-service --list
 ### 1. Check Before Adding
 ```bash
 # Search first
-atom -registry search --keyword my-service
+atom registry search --keyword my-service
 
 # Then add if not found
-atom -registry add-service --name my-service ...
+atom registry add-service --name my-service ...
 ```
 
 ### 2. Use Show for Verification
 ```bash
 # After making changes
-atom -registry show --name my-service
-atom -registry show --name wity
+atom registry show --name my-service
+atom registry show --name wity
 ```
 
 ### 3. Version Control Registry
 ```bash
 # Before major changes
-git add bin/config/deployment-registry.yaml
+git add $ATOM_REGISTRY_PATH
 git commit -m "Registry state before changes"
 
 # Make changes
-atom -registry ...
+atom registry ...
 
 # Commit changes
-git add bin/config/deployment-registry.yaml
+git add $ATOM_REGISTRY_PATH
 git commit -m "Added staging environment"
 ```
 
 ### 4. Dry Run Deployments
 ```bash
 # After updating registry
-atom -deploy my-service --product staging --dry-run
+atom deploy my-service --product staging --dry-run
 ```
 
 ### 5. Search for Impact
 ```bash
 # Before removing a service
-atom -registry show --name old-service
+atom registry show --name old-service
 # Check "Used by products" before removing
+```
+
+### 6. Use Autoprepare for Team Sync
+```bash
+# On dev machine with all services running
+atom registry ap --product team-dev-server
+
+# Commit and push registry
+git add $ATOM_REGISTRY_PATH
+git commit -m "Updated registry from dev environment"
+git push
+
+# Team members pull and have updated registry
 ```
 
 ---
@@ -662,8 +787,8 @@ atom -registry show --name old-service
 ## Related Commands
 
 - **Deployment:** See [DEPLOYMENT.md](DEPLOYMENT.md)
-- **Installation:** See [INSTALL.md](INSTALL.md)
-- **Main CLI:** See [README.md](README.md)
+- **Configuration:** See [CONFIGURATION.md](CONFIGURATION.md)
+- **Main CLI:** See [../README.md](../README.md)
 
 ---
 

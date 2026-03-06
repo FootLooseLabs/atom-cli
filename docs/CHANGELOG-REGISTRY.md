@@ -12,48 +12,54 @@ Added complete CLI-based registry management system to complement the deployment
 
 ### List & Query
 ```bash
-atom -registry list                                    # Summary
-atom -registry list --services                         # All services
-atom -registry list --products                         # All products
-atom -registry search --keyword <keyword>              # Search
-atom -registry show --name <name>                      # Show details
+atom registry list                                    # Summary
+atom registry list --services                         # All services
+atom registry list --products                         # All products
+atom registry search --keyword <keyword>              # Search
+atom registry show --name <name>                      # Show details
 ```
 
 ### Add
 ```bash
-atom -registry add-service --name <name> \
+atom registry add-service --name <name> \
   --repo <url> --branch <branch>                       # Add service
 
-atom -registry add-product --name <name> \
+atom registry add-product --name <name> \
   --server <host> --path <path>                        # Add product
 ```
 
 ### Link/Unlink
 ```bash
-atom -registry link --service <svc> --product <prod>   # Link
-atom -registry unlink --service <svc> --product <prod> # Unlink
+atom registry link --service <svc> --product <prod>   # Link
+atom registry unlink --service <svc> --product <prod> # Unlink
 ```
 
 ### Remove
 ```bash
-atom -registry remove-service --name <name>            # Remove service
-atom -registry remove-product --name <name>            # Remove product
+atom registry remove-service --name <name>            # Remove service
+atom registry remove-product --name <name>            # Remove product
 ```
 
 ### Update
 ```bash
-atom -registry update-service --name <name> \
+atom registry update-service --name <name> \
   [--repo <url>] [--branch <branch>]                   # Update service
 
-atom -registry update-product --name <name> \
+atom registry update-product --name <name> \
   [--server <host>] [--path <path>]                    # Update product
+```
+
+### Auto-discover
+```bash
+atom registry autoprepare --product <name>            # Auto-discover services
+atom registry ap --product <name>                     # Short form
 ```
 
 ---
 
 ## Files Modified/Created
 
-### Core Implementation (2 files modified, 1 new)
+### Core Implementation (2 files modified, 2 new)
 
 1. **`bin/utils/yamlParser.js`** - Added write operations (+269 lines)
    - `save()` - Write YAML to disk
@@ -67,30 +73,46 @@ atom -registry update-product --name <name> \
    - `unlinkServiceFromProduct()` - Unlink service
    - `search()` - Search registry by keyword
 
-2. **`bin/commands/manage_registry.js`** - Registry command handler (NEW, 634 lines)
+2. **`bin/commands/manage_registry.js`** - Registry command handler (NEW, 650+ lines)
    - Handles all registry operations
    - Interactive confirmations for destructive operations
    - Detailed error messages and validations
    - Help text for each operation
+   - Integrated autoprepare handler
 
-3. **`bin/main.js`** - Added `-registry` flag and options
-   - Added 14 new command-line options
-   - Integrated manage_registry handler
+3. **`bin/commands/autoprepare_registry.js`** - Service auto-discovery (NEW, 424 lines)
+   - PM2 process discovery
+   - Atom service detection
+   - Git repository extraction
+   - Git remote preference support
+   - Service categorization (add, update, already correct)
+   - Optional product creation
 
-### Documentation (2 new files)
+4. **`bin/main.js`** - Restructured to subcommands
+   - Changed from flat options to proper subcommand structure
+   - Added `registry` subcommand with all options
+   - Contextual help support
 
-4. **`REGISTRY.md`** - Complete registry management guide
+### Documentation (3 new files)
+
+5. **`docs/REGISTRY.md`** - Complete registry management guide
    - All commands with examples
    - Workflow examples
    - Safety features
    - Error handling
    - Best practices
+   - Autoprepare documentation
 
-5. **`CHANGELOG-REGISTRY.md`** - This file
+6. **`docs/CONFIGURATION.md`** - Environment variables and settings
+   - ATOM_REGISTRY_PATH documentation
+   - Git remote preference guide
+   - SSH configuration
+
+7. **`docs/CHANGELOG-REGISTRY.md`** - This file
 
 ### Updated Documentation (1 file)
 
-6. **`README.md`** - Added registry commands section
+8. **`README.md`** - Added registry commands section
 
 ---
 
@@ -99,7 +121,7 @@ atom -registry update-product --name <name> \
 ### Command Flow
 
 ```
-User Command: atom -registry add-service --name svc --repo url --branch main
+User Command: atom registry add-service --name svc --repo url --branch main
     ↓
 main.js (parse options)
     ↓
@@ -108,6 +130,25 @@ manage_registry.js (handle operation)
 yamlParser.js (add service)
     ↓
 Save YAML file
+    ↓
+Success message
+```
+
+### Autoprepare Flow
+
+```
+User Command: atom registry ap --product dev
+    ↓
+manage_registry.js (route to autoprepare)
+    ↓
+autoprepare_registry.js
+    ├─ Query PM2 processes
+    ├─ Filter Atom services
+    ├─ Extract git info (with remote preference)
+    ├─ Categorize (add/update/correct)
+    ├─ Prompt for confirmation
+    ├─ Update registry via yamlParser
+    └─ Optionally create/update product
     ↓
 Success message
 ```
@@ -124,6 +165,7 @@ Success message
    - All add operations prompt for confirmation
    - All remove operations prompt with default "No"
    - All link operations prompt for confirmation
+   - Autoprepare shows diff before applying
 
 3. **Atomic Writes**
    - YAML file written atomically
@@ -150,6 +192,23 @@ Used `inquirer` library for:
 - Confirmation prompts on destructive operations
 - Better UX than simple yes/no
 
+### PM2 Integration
+
+Autoprepare uses PM2 JSON output:
+```javascript
+const pm2Output = execSync('pm2 jlist', { encoding: 'utf8' });
+const processes = JSON.parse(pm2Output);
+```
+
+### Git Remote Preference
+
+Supports comma-separated remote preferences:
+```bash
+atom registry ap --git-remote upstream,origin
+```
+
+Checks remotes in order, uses first found, falls back to any if none match.
+
 ### Dependency Management
 
 Services can't be removed if linked to products:
@@ -162,8 +221,8 @@ if (products.length > 0) {
 
 Must unlink first:
 ```bash
-atom -registry unlink --service svc --product prod
-atom -registry remove-service --name svc
+atom registry unlink --service svc --product prod
+atom registry remove-service --name svc
 ```
 
 ---
@@ -177,6 +236,13 @@ atom -registry remove-service --name svc
 - Search by keyword
 - Show service details
 - Show product details
+
+✅ **Tested (Autoprepare):**
+- PM2 process discovery
+- Atom service detection
+- Git info extraction
+- Remote preference handling
+- Service categorization
 
 ⚠️ **Not Tested (Write Operations):**
 - Add service
@@ -197,7 +263,7 @@ atom -registry remove-service --name svc
 ### Example 1: Add New Service
 
 ```bash
-$ atom -registry add-service --name my-new-service \
+$ atom registry add-service --name my-new-service \
   --repo git@github.com:org/my-new-service.git \
   --branch master
 
@@ -213,7 +279,7 @@ Branch: master
 ### Example 2: Search Registry
 
 ```bash
-$ atom -registry search --keyword auth
+$ atom registry search --keyword auth
 
 Searching for: "auth"
 
@@ -225,7 +291,7 @@ Services:
 ### Example 3: Show Service
 
 ```bash
-$ atom -registry show --name common_auth_agent
+$ atom registry show --name common_auth_agent
 
 Service: common_auth_agent
 
@@ -238,13 +304,44 @@ Used by products: wity, gcp-vritti-dogfooding
 ### Example 4: Link Service to Product
 
 ```bash
-$ atom -registry link --service my-new-service --product staging
+$ atom registry link --service my-new-service --product staging
 
 Linking: my-new-service → staging
 
 ? Link this service to product? Yes
 
 ✓ Service "my-new-service" linked to product "staging"
+```
+
+### Example 5: Auto-discover Services
+
+```bash
+$ atom registry ap --product my-dev-machine --git-remote upstream,origin
+
+🔍 Auto-preparing registry from running services...
+Git remote preference: upstream > origin
+
+Scanning 26 PM2 processes...
+
+  ✓ common_auth_agent
+    Path: /home/ubuntu/agents/common_auth_agent
+    Repo: git@github.com:company/common_auth_agent.git
+    Branch: master (remote: upstream)
+
+Found 14 services:
+
+New services (will be added):
+  ✓ new-service-1
+    git@github.com:org/new-service-1.git (branch: master)
+
+Summary:
+  To add: 1
+  To update: 0
+  Already correct: 13
+
+? Apply these changes to registry? Yes
+
+✓ Registry updated successfully!
 ```
 
 ---
@@ -255,30 +352,32 @@ Registry management complements deployment:
 
 ```bash
 # 1. Add service to registry
-atom -registry add-service --name payment-service \
+atom registry add-service --name payment-service \
   --repo git@github.com:org/payment-service.git \
   --branch master
 
 # 2. Link to product
-atom -registry link --service payment-service --product wity
+atom registry link --service payment-service --product wity
 
 # 3. Deploy
-atom -deploy payment-service --product wity
+atom deploy payment-service --product wity
 ```
 
 ---
 
 ## Breaking Changes
 
-**None.** All changes are additive.
+**CLI Syntax Changed (v0.0.5):**
+- Old: `atom -registry` → New: `atom registry`
+- Part of broader subcommand restructure
 
 ---
 
 ## Backward Compatibility
 
-✅ Existing commands unchanged:
-- All `atom -deploy` commands work identically
-- All `atom -s`, `-i`, `-ss`, etc. commands work identically
+✅ Existing functionality preserved:
+- All `atom deploy` commands work identically
+- All other commands work with new syntax
 - Existing YAML registry format unchanged
 - Manual YAML editing still supported
 
@@ -296,15 +395,15 @@ atom -deploy payment-service --product wity
 ## Code Statistics
 
 **Total Addition:**
-- **903 new lines** (yamlParser: 269, manage_registry: 634)
-- **1 new command file**
-- **2 new documentation files**
-- **1 file modified** (main.js: +17 lines)
+- **1,343 new lines** (yamlParser: 269, manage_registry: 650, autoprepare: 424)
+- **2 new command files**
+- **3 new documentation files**
+- **1 file modified** (main.js: restructured)
 
 **Total Project Size (with deployment + registry):**
-- ~1,679 lines of implementation code
-- ~5 command files
-- ~4 documentation files
+- ~2,000+ lines of implementation code
+- ~6 command files
+- ~5 documentation files
 
 ---
 
@@ -343,7 +442,7 @@ vim bin/config/deployment-registry.yaml
 
 ### After (CLI Management)
 ```bash
-atom -registry add-service --name svc --repo url --branch main
+atom registry add-service --name svc --repo url --branch main
 # Guided by prompts
 # Automatic validation
 # Confirmation required
@@ -358,6 +457,8 @@ atom -registry add-service --name svc --repo url --branch main
 - ✅ **Detailed views** - See full config without opening file
 - ✅ **Scripting friendly** - Can be used in automation
 - ✅ **Version control ready** - Changes are clean diffs
+- ✅ **Auto-discovery** - Extract from running services
+- ✅ **Team sync** - Share registry via environment variable
 
 ---
 
@@ -366,59 +467,73 @@ atom -registry add-service --name svc --repo url --branch main
 ### Pattern 1: Add New Environment
 ```bash
 # Add product
-atom -registry add-product --name production \
+atom registry add-product --name production \
   --server prod.example.com --path /opt/services/
 
 # Link existing services
-atom -registry link --service auth-service --product production
-atom -registry link --service api-gateway --product production
+atom registry link --service auth-service --product production
+atom registry link --service api-gateway --product production
 
 # Deploy
-atom -deploy --product production --all-services
+atom deploy --product production --all-services
 ```
 
 ### Pattern 2: Service Migration
 ```bash
 # Search for old service
-atom -registry show --name old-auth
+atom registry show --name old-auth
 
 # Add new service
-atom -registry add-service --name new-auth \
+atom registry add-service --name new-auth \
   --repo git@github.com:org/new-auth.git --branch main
 
 # Link to same products
-atom -registry link --service new-auth --product wity
-atom -registry link --service new-auth --product staging
+atom registry link --service new-auth --product wity
+atom registry link --service new-auth --product staging
 
 # Deploy new
-atom -deploy new-auth --all
+atom deploy new-auth --all
 
 # Remove old (after testing)
-atom -registry unlink --service old-auth --product wity
-atom -registry unlink --service old-auth --product staging
-atom -registry remove-service --name old-auth
+atom registry unlink --service old-auth --product wity
+atom registry unlink --service old-auth --product staging
+atom registry remove-service --name old-auth
 ```
 
 ### Pattern 3: Quick Updates
 ```bash
 # Update branch for testing
-atom -registry update-service --name my-service --branch feature-xyz
+atom registry update-service --name my-service --branch feature-xyz
 
 # Deploy with new branch
-atom -deploy my-service --product staging
+atom deploy my-service --product staging
 
 # Revert if needed
-atom -registry update-service --name my-service --branch master
-atom -deploy my-service --product staging
+atom registry update-service --name my-service --branch master
+atom deploy my-service --product staging
+```
+
+### Pattern 4: Team Onboarding
+```bash
+# On dev machine with all services running
+atom registry ap --product team-dev-server --git-remote upstream
+
+# Commit registry
+git add $ATOM_REGISTRY_PATH
+git commit -m "Updated registry from dev environment"
+git push
+
+# New team member clones and has full registry
 ```
 
 ---
 
 ## Documentation
 
-- **[REGISTRY.md](REGISTRY.md)** - Complete registry management guide
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment system guide
-- **[README.md](README.md)** - Main CLI documentation
+- **[docs/REGISTRY.md](REGISTRY.md)** - Complete registry management guide
+- **[docs/DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment system guide
+- **[docs/CONFIGURATION.md](CONFIGURATION.md)** - Environment variables
+- **[../README.md](../README.md)** - Main CLI documentation
 
 ---
 
@@ -426,11 +541,14 @@ atom -deploy my-service --product staging
 
 Added **comprehensive CLI-based registry management** to Atom CLI:
 - 13 registry operations (list, search, add, remove, link, update, etc.)
+- Auto-discovery of running services via PM2
+- Git remote preference support
+- Environment variable override (ATOM_REGISTRY_PATH)
 - Interactive confirmations for safety
 - Comprehensive validation
-- Zero breaking changes
+- Industry-standard subcommand structure
 - Fully documented
 
-Total: **903 lines of code, 2 new docs, 1 modified file**
+Total: **1,343 lines of code, 3 new docs, 1 file restructured**
 
 Registry management + Deployment = **Complete DevOps toolkit for Atom microservices**

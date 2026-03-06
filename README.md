@@ -63,7 +63,7 @@ cd atom-cli
 The nucleus daemon is required for all Atom services to communicate:
 
 ```bash
-atom -s
+atom start
 ```
 
 This command:
@@ -76,7 +76,7 @@ This command:
 Generate a new service project with proper boilerplate:
 
 ```bash
-atom -i
+atom init
 ```
 
 You'll be prompted for:
@@ -89,7 +89,7 @@ You'll be prompted for:
 Send test messages between services:
 
 ```bash
-atom -ss
+atom signal
 ```
 
 This interactive tool allows you to:
@@ -103,62 +103,62 @@ This interactive tool allows you to:
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| `-s, --start` | Start the nucleus daemon | `atom -s` |
-| `-i, --init` | Initialize a new Atom component | `atom -i` |
-| `-ss, --signal` | Interactive signal testing tool | `atom -ss` |
-| `-diag, --diagnose` | Diagnose nucleus connectivity | `atom -diag` |
+| `start` | Start the nucleus daemon | `atom start` |
+| `init` | Initialize a new Atom component | `atom init` |
+| `signal` | Interactive signal testing tool | `atom signal` |
+| `diagnose` | Diagnose nucleus connectivity | `atom diagnose` |
 
 ### Environment Management
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| `-senv, --startenv <config>` | Start environment from config | `atom -senv ./config.json` |
-| `-sii, --startintrospectiveinterface` | Launch introspective interface | `atom -sii` |
+| `startenv <config>` | Start environment from config | `atom startenv ./config.json` |
+| `introspect` | Launch introspective interface | `atom introspect` |
 
 ### Advanced Commands
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| `-b, --broadcast <payload>` | Broadcast message to service | `atom -b @myapp/service:::topic:::{data}` |
+| `broadcast <payload>` | Broadcast message to service | `atom broadcast @myapp/service:::topic:::{data}` |
 | `-d, --debug` | Enable debug output | `atom -d [command]` |
 
 ### Deployment Commands (NEW)
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| `-deploy --list` | List all deployments | `atom -deploy --list` |
-| `-deploy <service> --list` | Show where service is deployed | `atom -deploy auth-service --list` |
-| `-deploy --product <product> --list` | Show services for product | `atom -deploy --product wity --list` |
-| `-deploy <service> --product <product>` | Deploy service to product | `atom -deploy auth-service --product wity` |
-| `-deploy <service> --all` | Deploy to all products | `atom -deploy auth-service --all` |
-| `-deploy --product <product> --all-services` | Deploy all services | `atom -deploy --product wity --all-services` |
+| `deploy --list` | List all deployments | `atom deploy --list` |
+| `deploy <service> --list` | Show where service is deployed | `atom deploy auth-service --list` |
+| `deploy --product <product> --list` | Show services for product | `atom deploy --product wity --list` |
+| `deploy <service> --product <product>` | Deploy service to product | `atom deploy auth-service --product wity` |
+| `deploy <service> --all` | Deploy to all products | `atom deploy auth-service --all` |
+| `deploy --product <product> --all-services` | Deploy all services | `atom deploy --product wity --all-services` |
 
 **Deployment Flags:**
 - `--restart` - Restart service via PM2 after deployment
 - `--dry-run` - Preview deployment without executing
 - `--debug` - Show verbose SSH output
 
-**See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment documentation.**
+**See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for complete deployment documentation.**
 
 ### Registry Management Commands (NEW)
 
 | Command | Description | Usage |
 |---------|-------------|-------|
-| `-registry list` | List summary | `atom -registry list` |
-| `-registry list --services` | List all services | `atom -registry list --services` |
-| `-registry list --products` | List all products | `atom -registry list --products` |
-| `-registry search --keyword <word>` | Search registry | `atom -registry search --keyword auth` |
-| `-registry show --name <name>` | Show details | `atom -registry show --name wity` |
-| `-registry add-service` | Add new service | `atom -registry add-service --name svc --repo url --branch main` |
-| `-registry add-product` | Add new product | `atom -registry add-product --name prod --server host --path /path` |
-| `-registry link` | Link service to product | `atom -registry link --service svc --product prod` |
-| `-registry unlink` | Unlink service | `atom -registry unlink --service svc --product prod` |
-| `-registry remove-service` | Remove service | `atom -registry remove-service --name svc` |
-| `-registry remove-product` | Remove product | `atom -registry remove-product --name prod` |
-| `-registry update-service` | Update service | `atom -registry update-service --name svc --branch dev` |
-| `-registry update-product` | Update product | `atom -registry update-product --name prod --path /new/path` |
+| `registry list` | List summary | `atom registry list` |
+| `registry list --services` | List all services | `atom registry list --services` |
+| `registry list --products` | List all products | `atom registry list --products` |
+| `registry search --keyword <word>` | Search registry | `atom registry search --keyword auth` |
+| `registry show --name <name>` | Show details | `atom registry show --name wity` |
+| `registry add-service` | Add new service | `atom registry add-service --name svc --repo url --branch main` |
+| `registry add-product` | Add new product | `atom registry add-product --name prod --server host --path /path` |
+| `registry link` | Link service to product | `atom registry link --service svc --product prod` |
+| `registry unlink` | Unlink service | `atom registry unlink --service svc --product prod` |
+| `registry remove-service` | Remove service | `atom registry remove-service --name svc` |
+| `registry remove-product` | Remove product | `atom registry remove-product --name prod` |
+| `registry update-service` | Update service | `atom registry update-service --name svc --branch dev` |
+| `registry update-product` | Update product | `atom registry update-product --name prod --path /new/path` |
 
-**See [REGISTRY.md](REGISTRY.md) for complete registry management documentation.**
+**See [docs/REGISTRY.md](docs/REGISTRY.md) for complete registry management documentation.**
 
 ---
 
@@ -169,7 +169,7 @@ Atom CLI supports configuration via environment variables:
 - **`ATOM_REGISTRY_PATH`** - Override default registry file location
 - **`--git-remote`** - Specify git remote preference for autoprepare
 
-**See [CONFIGURATION.md](CONFIGURATION.md) for complete configuration guide.**
+**See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for complete configuration guide.**
 
 ## Detailed Usage
 
@@ -178,7 +178,7 @@ Atom CLI supports configuration via environment variables:
 The nucleus daemon is the backbone of the Atom framework, providing service discovery and connection brokering.
 
 ```bash
-atom -s
+atom start
 ```
 
 **What it does:**
@@ -212,7 +212,7 @@ pm2 stop @Atom.NucleusDaemon
 Generate a complete Atom service project structure:
 
 ```bash
-atom -i
+atom init
 ```
 
 **Generated Structure:**
@@ -250,7 +250,7 @@ my-service/
 Interactive tool for testing messages between services:
 
 ```bash
-atom -ss
+atom signal
 ```
 
 **Workflow:**
@@ -278,7 +278,7 @@ operation initiated
 Start multiple services from a configuration file:
 
 ```bash
-atom -senv ./environment-config.json
+atom startenv ./environment-config.json
 ```
 
 **Configuration File Format:**
@@ -311,7 +311,7 @@ atom -senv ./environment-config.json
 Comprehensive diagnostic tool for troubleshooting:
 
 ```bash
-atom -diag
+atom diagnose
 ```
 
 **Diagnostic Checks:**
@@ -348,7 +348,7 @@ atom -diag
 Send direct messages to services:
 
 ```bash
-atom -b "@myapp/user-service:::user-created:::{'userId':'123','email':'user@example.com'}"
+atom broadcast "@myapp/user-service:::user-created:::{'userId':'123','email':'user@example.com'}"
 ```
 
 **Format:**
@@ -365,7 +365,7 @@ atom -b "@myapp/user-service:::user-created:::{'userId':'123','email':'user@exam
 Launch an interactive interface for service discovery and communication:
 
 ```bash
-atom -sii
+atom introspect
 ```
 
 **Features:**
@@ -435,10 +435,10 @@ module.exports = serviceConfig;
 
 ```bash
 # Start nucleus daemon
-atom -s
+atom start
 
 # Create new service
-atom -i
+atom init
 cd my-new-service
 npm install
 
@@ -450,10 +450,10 @@ npm run dev
 
 ```bash
 # In another terminal, test communication
-atom -ss
+atom signal
 
 # Or diagnose issues
-atom -diag
+atom diagnose
 ```
 
 ### Debug Mode
@@ -461,9 +461,9 @@ atom -diag
 Enable debug output for detailed logging:
 
 ```bash
-atom -d -s    # Debug nucleus startup
-atom -d -ss   # Debug signal testing
-atom -d -senv ./config.json  # Debug environment startup
+atom -d start        # Debug nucleus startup
+atom -d signal       # Debug signal testing
+atom -d startenv ./config.json  # Debug environment startup
 ```
 
 ### Log Files
@@ -560,16 +560,16 @@ pm2 show @myapp/my-service
 
 ```bash
 # Always start with nucleus
-atom -s
+atom start
 
 # Create services with proper structure
-atom -i
+atom init
 
 # Test communication before deployment
-atom -ss
+atom signal
 
 # Use diagnostics for troubleshooting
-atom -diag
+atom diagnose
 ```
 
 ### 5. Production Deployment

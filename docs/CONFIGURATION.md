@@ -14,7 +14,7 @@ Override the default deployment registry file location.
 export ATOM_REGISTRY_PATH=/path/to/my/registry.yaml
 
 # Or per-command
-ATOM_REGISTRY_PATH=/team/shared/registry.yaml atom -deploy --list
+ATOM_REGISTRY_PATH=/team/shared/registry.yaml atom deploy --list
 ```
 
 **Use Cases:**
@@ -29,11 +29,11 @@ ATOM_REGISTRY_PATH=/team/shared/registry.yaml atom -deploy --list
    ```bash
    # Development
    export ATOM_REGISTRY_PATH=~/atom-dev-registry.yaml
-   atom -deploy my-service --product dev
+   atom deploy my-service --product dev
 
    # Production
    export ATOM_REGISTRY_PATH=~/atom-prod-registry.yaml
-   atom -deploy my-service --product prod
+   atom deploy my-service --product prod
    ```
 
 3. **Cloud Sync**
@@ -63,23 +63,23 @@ ATOM_REGISTRY_PATH=/team/shared/registry.yaml atom -deploy --list
 
 ### Git Remote Preference
 
-When running `atom -registry autoprepare`, you can specify which git remote to use when extracting repository URLs.
+When running `atom registry autoprepare`, you can specify which git remote to use when extracting repository URLs.
 
 **Default:** `origin,upstream` (checks origin first, then upstream)
 
 **Usage:**
 ```bash
 # Prefer upstream over origin
-atom -registry ap --git-remote upstream,origin
+atom registry ap --git-remote upstream,origin
 
 # Use only upstream
-atom -registry ap --git-remote upstream
+atom registry ap --git-remote upstream
 
 # Use only origin (default behavior)
-atom -registry ap --git-remote origin
+atom registry ap --git-remote origin
 
 # Multiple remotes in order
-atom -registry ap --git-remote upstream,origin,company,gitlab
+atom registry ap --git-remote upstream,origin,company,gitlab
 ```
 
 **When to Use:**
@@ -96,7 +96,7 @@ atom -registry ap --git-remote upstream,origin,company,gitlab
 Solution:
 ```bash
 # Use upstream (main repo) instead of your fork
-atom -registry ap --git-remote upstream,origin
+atom registry ap --git-remote upstream,origin
 ```
 
 **Scenario 2: Company + GitHub**
@@ -111,13 +111,13 @@ atom -registry ap --git-remote upstream,origin
 Solution:
 ```bash
 # Prefer company GitLab over GitHub
-atom -registry ap --git-remote company,origin
+atom registry ap --git-remote company,origin
 ```
 
 **Scenario 3: Multiple remotes**
 ```bash
 # Try in order: upstream → origin → any other remote
-atom -registry ap --git-remote upstream,origin
+atom registry ap --git-remote upstream,origin
 ```
 
 **Behavior:**
@@ -195,7 +195,7 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/atom_deploy_key
 ssh-copy-id -i ~/.ssh/atom_deploy_key.pub user@server.com
 
 # Configure in registry
-atom -registry update-product --name production \
+atom registry update-product --name production \
   --ssh-key ~/.ssh/atom_deploy_key
 ```
 
@@ -235,7 +235,7 @@ Higher number = higher priority.
 export ATOM_REGISTRY_PATH=/mnt/nfs/team/atom-registry.yaml
 
 # Now all team members use the same registry
-atom -deploy --list
+atom deploy --list
 ```
 
 ### 2. Version Control Registry
@@ -247,7 +247,7 @@ git clone git@github.com:company/atom-registry.git
 export ATOM_REGISTRY_PATH=/team/shared/atom-registry/registry.yaml
 
 # Update registry
-atom -registry ap
+atom registry ap
 git add registry.yaml
 git commit -m "Updated service repos"
 git push
@@ -267,18 +267,18 @@ export ATOM_REGISTRY_PATH=~/atom-prod-registry.yaml
 atom "$@"
 
 # Usage
-atom-dev -deploy my-service --product dev
-atom-prod -deploy my-service --product prod
+atom-dev deploy my-service --product dev
+atom-prod deploy my-service --product prod
 ```
 
 ### 4. Autoprepare with Correct Remotes
 
 ```bash
 # If your repos use upstream for main repo
-atom -registry ap --git-remote upstream,origin --product dev-machine
+atom registry ap --git-remote upstream,origin --product dev-machine
 
 # Add to alias
-alias atom-ap='atom -registry ap --git-remote upstream,origin'
+alias atom-ap='atom registry ap --git-remote upstream,origin'
 atom-ap --product my-machine
 ```
 
@@ -308,13 +308,13 @@ touch $ATOM_REGISTRY_PATH
 
 ```bash
 # Check which remote autoprepare used
-atom -registry ap --dry-run
+atom registry ap --dry-run
 
 # Output shows:
 # Branch: master (remote: origin)
 
 # If you wanted upstream:
-atom -registry ap --git-remote upstream,origin
+atom registry ap --git-remote upstream,origin
 ```
 
 ### SSH Key Permission Denied
@@ -352,7 +352,7 @@ git commit -m "Initial registry"
 export ATOM_REGISTRY_PATH=/team/shared/atom/registry.yaml
 
 # Team lead populates from their machine
-atom -registry ap --product team-dev-server
+atom registry ap --product team-dev-server
 cd /team/shared/atom
 git add registry.yaml
 git commit -m "Added dev server services"
@@ -363,7 +363,7 @@ cd /team/shared/atom
 git pull
 
 # Now everyone sees the same registry
-atom -deploy --list
+atom deploy --list
 ```
 
 ### Example 2: Fork Workflow
@@ -373,14 +373,14 @@ atom -deploy --list
 # You want registry to use upstream URLs
 
 # Create alias
-echo 'alias atom-ap="atom -registry ap --git-remote upstream,origin"' >> ~/.bashrc
+echo 'alias atom-ap="atom registry ap --git-remote upstream,origin"' >> ~/.bashrc
 source ~/.bashrc
 
 # Use alias
 atom-ap --product my-dev-machine
 
 # Verify it used upstream
-atom -registry show --name my-service
+atom registry show --name my-service
 # Should show upstream URL, not your fork
 ```
 
@@ -403,9 +403,9 @@ EOF
 chmod +x ~/bin/atom-*
 
 # Use different registries
-atom-dev -deploy my-service --product dev
-atom-staging -deploy my-service --product staging
-atom-prod -deploy my-service --product prod
+atom-dev deploy my-service --product dev
+atom-staging deploy my-service --product staging
+atom-prod deploy my-service --product prod
 ```
 
 ---
@@ -414,4 +414,4 @@ atom-prod -deploy my-service --product prod
 
 - [DEPLOYMENT.md](DEPLOYMENT.md) - Deployment system
 - [REGISTRY.md](REGISTRY.md) - Registry management commands
-- [README.md](README.md) - Main CLI documentation
+- [../README.md](../README.md) - Main CLI documentation

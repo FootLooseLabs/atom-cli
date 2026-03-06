@@ -5,9 +5,9 @@ const DeploymentRegistry = require('../utils/yamlParser');
  * List deployments command handler
  *
  * Supported usage:
- * - atom -deploy <service> --list
- * - atom -deploy --product <product> --list
- * - atom -deploy --list (all)
+ * - atom deploy <service> --list
+ * - atom deploy --product <product> --list
+ * - atom deploy --list (all)
  */
 function listDeployments(serviceName, options) {
   const { product, all } = options;
@@ -36,9 +36,9 @@ function listDeployments(serviceName, options) {
     } else {
       console.error(chalk.red('Error: Invalid combination of flags'));
       console.log('\nUsage:');
-      console.log('  atom -deploy <service> --list           # List where service is deployed');
-      console.log('  atom -deploy --product <product> --list # List services for product');
-      console.log('  atom -deploy --list                     # List all deployments');
+      console.log('  atom deploy <service> --list           # List where service is deployed');
+      console.log('  atom deploy --product <product> --list # List services for product');
+      console.log('  atom deploy --list                     # List all deployments');
       process.exit(1);
     }
 

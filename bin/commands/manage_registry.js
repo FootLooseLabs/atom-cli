@@ -124,7 +124,7 @@ function handleList(registry, options) {
     console.log(chalk.bold(`Services: ${services.length}`));
     console.log(chalk.bold(`Products: ${products.length}\n`));
     console.log(chalk.gray('Use --services or --products to see details'));
-    console.log(chalk.gray('Or use: atom -deploy --list'));
+    console.log(chalk.gray('Or use: atom deploy --list'));
   }
 
   console.log('');

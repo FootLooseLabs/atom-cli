@@ -17,32 +17,32 @@ All configuration is stored in `bin/config/deployment-registry.yaml`.
 
 ### 1. List all deployments
 ```bash
-sudo atom -deploy --list
+sudo atom deploy --list
 ```
 
 ### 2. List where a specific service is deployed
 ```bash
-sudo atom -deploy common_auth_agent --list
+sudo atom deploy common_auth_agent --list
 ```
 
 ### 3. List all services for a product
 ```bash
-sudo atom -deploy --product wity --list
+sudo atom deploy --product wity --list
 ```
 
 ### 4. Deploy a service to a product
 ```bash
-sudo atom -deploy common_auth_agent --product wity
+sudo atom deploy common_auth_agent --product wity
 ```
 
 ### 5. Deploy a service everywhere it's configured
 ```bash
-sudo atom -deploy common_auth_agent --all
+sudo atom deploy common_auth_agent --all
 ```
 
 ### 6. Deploy all services for a product
 ```bash
-sudo atom -deploy --product wity --all-services
+sudo atom deploy --product wity --all-services
 ```
 
 ---
@@ -53,17 +53,17 @@ sudo atom -deploy --product wity --all-services
 
 | Command | Description |
 |---------|-------------|
-| `atom -deploy --list` | Show all products, servers, and services |
-| `atom -deploy <service> --list` | Show where a service is deployed |
-| `atom -deploy --product <product> --list` | Show all services for a product |
+| `atom deploy --list` | Show all products, servers, and services |
+| `atom deploy <service> --list` | Show where a service is deployed |
+| `atom deploy --product <product> --list` | Show all services for a product |
 
 ### Deployment Commands
 
 | Command | Description |
 |---------|-------------|
-| `atom -deploy <service> --product <product>` | Deploy service to specific product |
-| `atom -deploy <service> --all` | Deploy service to all products that use it |
-| `atom -deploy --product <product> --all-services` | Deploy all services for a product |
+| `atom deploy <service> --product <product>` | Deploy service to specific product |
+| `atom deploy <service> --all` | Deploy service to all products that use it |
+| `atom deploy --product <product> --all-services` | Deploy all services for a product |
 
 ### Optional Flags
 
@@ -135,7 +135,7 @@ Environment variables are merged with this precedence (highest to lowest):
 ### Deployment Flow Diagram
 
 ```
-User runs: atom -deploy auth-service --product staging
+User runs: atom deploy auth-service --product staging
 
         ↓
     Parse YAML Registry
@@ -160,7 +160,7 @@ User runs: atom -deploy auth-service --product staging
 ### Example 1: Deploy Single Service to Product
 
 ```bash
-sudo atom -deploy common_auth_agent --product wity
+sudo atom deploy common_auth_agent --product wity
 ```
 
 **Output:**
@@ -196,7 +196,7 @@ Deployment Summary
 ### Example 2: Deploy Service Everywhere
 
 ```bash
-sudo atom -deploy rtc-webrequest-handler --all
+sudo atom deploy rtc-webrequest-handler --all
 ```
 
 Deploys to all products that use this service:
@@ -206,7 +206,7 @@ Deploys to all products that use this service:
 ### Example 3: Deploy All Services for a Product
 
 ```bash
-sudo atom -deploy --product wity --all-services
+sudo atom deploy --product wity --all-services
 ```
 
 Deploys all 24 services configured for the `wity` product.
@@ -214,7 +214,7 @@ Deploys all 24 services configured for the `wity` product.
 ### Example 4: Dry Run
 
 ```bash
-sudo atom -deploy common_auth_agent --product wity --dry-run
+sudo atom deploy common_auth_agent --product wity --dry-run
 ```
 
 Shows what would happen without actually deploying.
@@ -222,7 +222,7 @@ Shows what would happen without actually deploying.
 ### Example 5: Deploy with Restart
 
 ```bash
-sudo atom -deploy common_auth_agent --product wity --restart
+sudo atom deploy common_auth_agent --product wity --restart
 ```
 
 Deploys and automatically restarts the service via PM2.
@@ -256,7 +256,7 @@ products:
 Deploy:
 
 ```bash
-sudo atom -deploy my-new-service --product wity
+sudo atom deploy my-new-service --product wity
 ```
 
 ### Adding a New Product
@@ -279,7 +279,7 @@ products:
 Deploy all services:
 
 ```bash
-sudo atom -deploy --product staging --all-services
+sudo atom deploy --product staging --all-services
 ```
 
 ### Product-Specific Configuration
@@ -409,7 +409,7 @@ As of v0.0.4, the registry includes:
 
 View current registry:
 ```bash
-sudo atom -deploy --list
+sudo atom deploy --list
 ```
 
 ---
@@ -418,26 +418,26 @@ sudo atom -deploy --list
 
 ### 1. Always Test with --dry-run First
 ```bash
-sudo atom -deploy my-service --product production --dry-run
+sudo atom deploy my-service --product production --dry-run
 ```
 
 ### 2. Deploy to Staging Before Production
 ```bash
 # Test on staging
-sudo atom -deploy my-service --product staging
+sudo atom deploy my-service --product staging
 
 # Verify it works
 # Then deploy to production
-sudo atom -deploy my-service --product production
+sudo atom deploy my-service --product production
 ```
 
 ### 3. Use Specific Product Deployments
 ```bash
 # Preferred: Deploy to specific product
-sudo atom -deploy auth-service --product staging
+sudo atom deploy auth-service --product staging
 
 # Careful: Deploys everywhere
-sudo atom -deploy auth-service --all
+sudo atom deploy auth-service --all
 ```
 
 ### 4. Check Service Status After Deployment
@@ -468,7 +468,7 @@ git push
 
 Enable verbose output:
 ```bash
-sudo atom -deploy service-name --product prod --debug
+sudo atom deploy service-name --product prod --debug
 ```
 
 Shows:
@@ -480,7 +480,7 @@ Shows:
 
 List all deployments to verify registry parses correctly:
 ```bash
-sudo atom -deploy --list
+sudo atom deploy --list
 ```
 
 If this fails, there's a YAML syntax error.
@@ -503,7 +503,7 @@ pm2 start npm --name service-name -- start
 
 ### Planned Features:
 - ✅ Local YAML registry (implemented)
-- 🚧 Registry management CLI commands (in progress)
+- ✅ Registry management CLI commands (implemented)
 - 📋 Cloud-based registry service
 - 📋 Deployment history/audit log
 - 📋 Rollback capability
@@ -519,10 +519,13 @@ pm2 start npm --name service-name -- start
 
 ```bash
 # Show main help
-sudo atom -h
+atom --help
+
+# Show deploy help
+atom deploy --help
 
 # Deployment examples
-cat DEPLOYMENT.md
+cat docs/DEPLOYMENT.md
 
 # Registry structure
 cat bin/config/deployment-registry.yaml
@@ -530,6 +533,6 @@ cat bin/config/deployment-registry.yaml
 
 ## Related Documentation
 
-- [Installation Guide](INSTALL.md) - Installing and updating atom-cli
-- [Main README](README.md) - Complete CLI documentation
-- [Deployment Registry Reference](ref-docs-for-devops-addition/README.md) - Original design docs
+- [Configuration Guide](CONFIGURATION.md) - Environment variables and settings
+- [Registry Management](REGISTRY.md) - CLI commands for managing registry
+- [Main README](../README.md) - Complete CLI documentation

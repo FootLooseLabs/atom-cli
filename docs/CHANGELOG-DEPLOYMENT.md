@@ -10,16 +10,16 @@ Added comprehensive deployment system for managing Atom microservices across mul
 
 #### Listing Commands
 ```bash
-atom -deploy --list                          # List all deployments
-atom -deploy <service> --list                # Show where service is deployed
-atom -deploy --product <product> --list      # Show services for product
+atom deploy --list                          # List all deployments
+atom deploy <service> --list                # Show where service is deployed
+atom deploy --product <product> --list      # Show services for product
 ```
 
 #### Deployment Commands
 ```bash
-atom -deploy <service> --product <product>            # Deploy to specific product
-atom -deploy <service> --all                          # Deploy everywhere
-atom -deploy --product <product> --all-services       # Deploy all services
+atom deploy <service> --product <product>            # Deploy to specific product
+atom deploy <service> --all                          # Deploy everywhere
+atom deploy --product <product> --all-services       # Deploy all services
 ```
 
 #### Optional Flags
@@ -43,10 +43,12 @@ atom -deploy --product <product> --all-services       # Deploy all services
    - List services, products, and deployments
    - Three modes: service view, product view, all view
 
-3. **`bin/utils/yamlParser.js`** (221 lines)
+3. **`bin/utils/yamlParser.js`** (490+ lines)
    - YAML registry parser with validation
    - Environment variable merging (3-level precedence)
    - Query methods for services, products, targets
+   - Registry management (add, update, remove, link)
+   - ATOM_REGISTRY_PATH support
 
 4. **`bin/utils/sshDeployer.js`** (267 lines)
    - SSH connection management via node-ssh
@@ -59,22 +61,24 @@ atom -deploy --product <product> --all-services       # Deploy all services
    - Centralized deployment configuration
    - 2 products, 25 services currently configured
 
-### Documentation (3 files)
+### Documentation (4 files)
 
-6. **`DEPLOYMENT.md`** - Complete deployment guide with examples
-7. **`INSTALL.md`** - Installation & update instructions
-8. **`update.sh`** - Convenience update script
+6. **`docs/DEPLOYMENT.md`** - Complete deployment guide with examples
+7. **`docs/REGISTRY.md`** - Registry management commands
+8. **`docs/CONFIGURATION.md`** - Environment variables and settings
+9. **`update.sh`** - Convenience update script
 
 ### Modified Files (3 files)
 
-9. **`bin/main.js`**
-   - Added `-deploy` option with sub-flags
-   - Integrated deploy and list commands
+10. **`bin/main.js`**
+    - Restructured from flat options to proper subcommands
+    - Added `deploy` command with sub-flags
+    - Integrated deploy and list commands
 
-10. **`package.json`**
+11. **`package.json`**
     - Added dependencies: `node-ssh`, `js-yaml`
 
-11. **`README.md`**
+12. **`README.md`**
     - Added deployment commands section
     - Updated overview
 
@@ -134,8 +138,8 @@ products:                   # Define products
 ### 2. Continue-on-Error Strategy
 **Why:** Partial deployments are better than none, full visibility into failures
 
-### 3. YAML Registry (for now)
-**Why:** Simple, version-controlled, no external services needed
+### 3. YAML Registry with Environment Variable Support
+**Why:** Simple, version-controlled, team-shareable, no external services needed
 **Future:** Cloud-based registry service
 
 ### 4. No Nucleus Modifications
@@ -143,6 +147,9 @@ products:                   # Define products
 
 ### 5. Optional PM2 Restart
 **Why:** User controls when services restart via `--restart` flag
+
+### 6. Subcommand Structure
+**Why:** Industry standard (git, docker, kubectl), better help discoverability
 
 ---
 
@@ -177,6 +184,8 @@ All FootLooseLabs services including auth, gateway, composers, ideators, etc.
 - YAML parsing with validation
 - Environment variable merging
 - Error handling (missing service, missing product)
+- Registry management commands
+- Autoprepare service discovery
 
 ⚠️ **Not Tested (requires actual deployment):**
 - Actual SSH deployment to servers
@@ -199,18 +208,26 @@ All FootLooseLabs services including auth, gateway, composers, ideators, etc.
 
 ---
 
-## Next Steps (Not Implemented Yet)
+## Implemented Features
 
-### Phase 2: Registry Management CLI
+### Phase 1: Deployment System ✅
+- SSH-based deployment
+- YAML registry
+- Environment variable management
+- Continue-on-error strategy
+- Dry-run mode
+
+### Phase 2: Registry Management CLI ✅
 ```bash
-atom -registry add-service <name> --repo <url> --branch <branch>
-atom -registry add-product <name> --server <host> --path <path>
-atom -registry link <service> --product <product>
-atom -registry remove-service <name>
-atom -registry search <keyword>
+atom registry add-service <name> --repo <url> --branch <branch>
+atom registry add-product <name> --server <host> --path <path>
+atom registry link --service <service> --product <product>
+atom registry remove-service <name>
+atom registry search --keyword <keyword>
+atom registry autoprepare --product <name>
 ```
 
-### Phase 3: Advanced Features
+### Phase 3: Advanced Features (Pending)
 - Deployment history/audit log
 - Rollback capability
 - Health checks after deployment
@@ -218,7 +235,7 @@ atom -registry search <keyword>
 - Parallel deployments
 - Blue-green deployments
 
-### Phase 4: Cloud Registry
+### Phase 4: Cloud Registry (Future)
 - REST API for registry queries
 - Multi-user permissions
 - Version history
@@ -231,7 +248,7 @@ atom -registry search <keyword>
 
 ### Example 1: Check where service is deployed
 ```bash
-$ sudo atom -deploy common_auth_agent --list
+$ sudo atom deploy common_auth_agent --list
 
 Deployments for service: common_auth_agent
 
@@ -249,7 +266,7 @@ Branch: master
 
 ### Example 2: Deploy to specific product
 ```bash
-$ sudo atom -deploy common_auth_agent --product wity --dry-run
+$ sudo atom deploy common_auth_agent --product wity --dry-run
 
 Deploying common_auth_agent to wity
 
@@ -261,7 +278,7 @@ Deployment Plan:
 
 ### Example 3: List all services for product
 ```bash
-$ sudo atom -deploy --product wity --list
+$ sudo atom deploy --product wity --list
 
 Services for product: wity
 
@@ -282,18 +299,25 @@ Services:
 
 ## Breaking Changes
 
-**None.** All changes are additive. Existing commands work identically.
+**CLI Syntax Changed (v0.0.5):**
+- Old: `atom -deploy` → New: `atom deploy`
+- Old: `atom -registry` → New: `atom registry`
+- Old: `atom -i` → New: `atom init`
+- Old: `atom -s` → New: `atom start`
+- All other commands similarly updated
+
+**Why:** Industry standard subcommand pattern for better help and discoverability
 
 ---
 
 ## Backward Compatibility
 
-✅ All existing commands unchanged:
-- `atom -s` - Start nucleus
-- `atom -i` - Init service
-- `atom -ss` - Send signals
-- `atom -diag` - Diagnose
-- `atom -senv` - Start environment
+✅ All existing command functionality preserved:
+- `atom start` - Start nucleus (was `atom -s`)
+- `atom init` - Init service (was `atom -i`)
+- `atom signal` - Send signals (was `atom -ss`)
+- `atom diagnose` - Diagnose (was `atom -diag`)
+- `atom startenv` - Start environment (was `atom -senv`)
 
 ✅ Installation process unchanged:
 - `sudo ./install.sh` still works
@@ -305,19 +329,23 @@ Services:
 
 ## Documentation
 
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide
-- **[INSTALL.md](INSTALL.md)** - Installation & updates
-- **[README.md](README.md)** - Updated with deployment commands
+- **[docs/DEPLOYMENT.md](DEPLOYMENT.md)** - Complete deployment guide
+- **[docs/REGISTRY.md](REGISTRY.md)** - Registry management
+- **[docs/CONFIGURATION.md](CONFIGURATION.md)** - Environment variables
+- **[../README.md](../README.md)** - Updated with new commands
 
 ---
 
 ## Summary
 
 Added complete **deployment management system** to Atom CLI, enabling:
-- Centralized YAML-based configuration
+- Centralized YAML-based configuration with environment variable override
 - SSH-based deployments to multiple servers
 - Product-based service organization
 - Environment variable management
-- Zero breaking changes to existing functionality
+- Registry management via CLI commands
+- Auto-discovery of running services
+- Industry-standard subcommand structure
+- Contextual help for all commands
 
-Total: **5 new files, 776 lines of code, 3 documentation files, 3 modified files**
+Total: **8 new files, 1500+ lines of code, 4 documentation files, 3 modified files**
