@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const chalk = require('chalk');
+const inquirer = require('inquirer');
+const { execSync } = require('child_process');
 
 /**
  * SSH-based service deployer
@@ -12,6 +14,9 @@ class SSHDeployer {
     this.debug = options.debug || false;
     this.dryRun = options.dryRun || false;
     this.ssh = new NodeSSH();
+    this.passphraseCache = {}; // Cache passphrases per SSH key path
+    this.currentServer = null; // Track current server for native SSH fallback
+    this.useNativeSSH = true; // Use native SSH for better agent forwarding support
   }
 
   /**
@@ -30,6 +35,40 @@ class SSHDeployer {
 
     const color = colors[type] || chalk.white;
     console.log(color(message));
+  }
+
+  /**
+   * Parse SSH config for a host using native ssh -G command
+   * This ensures we get exactly the same behavior as native ssh
+   */
+  parseSSHConfig(hostname) {
+    try {
+      // Use ssh -G to get the effective configuration
+      // This reads ~/.ssh/config and applies all the settings
+      const output = execSync(`ssh -G ${hostname}`, { encoding: 'utf8' });
+
+      const config = {};
+      output.split('\n').forEach(line => {
+        const [key, ...valueParts] = line.split(' ');
+        const value = valueParts.join(' ');
+
+        // Extract the settings we need
+        if (key === 'hostname') config.hostname = value;
+        if (key === 'user') config.user = value;
+        if (key === 'port') config.port = parseInt(value);
+        if (key === 'identityfile') {
+          // ssh -G returns the first matching identity file
+          if (!config.identityfile) {
+            config.identityfile = value.replace(/^~/, os.homedir());
+          }
+        }
+      });
+
+      return config;
+    } catch (error) {
+      this.log(`Failed to parse SSH config for ${hostname}: ${error.message}`, 'warning');
+      return null;
+    }
   }
 
   /**
@@ -53,8 +92,6 @@ class SSHDeployer {
    * Connect to server via SSH
    */
   async connect(server) {
-    const sshKeyPath = this.resolveSSHKey(server.ssh_key);
-
     this.log(`Connecting to ${server.hostname}...`, 'debug');
 
     if (this.dryRun) {
@@ -63,19 +100,108 @@ class SSHDeployer {
     }
 
     try {
+      // First, try to parse SSH config to get native ssh behavior
+      const sshConfig = this.parseSSHConfig(server.hostname);
+
+      // Determine connection parameters (SSH config takes precedence)
+      const actualHostname = sshConfig?.hostname || server.hostname;
+      const actualUser = sshConfig?.user || server.username || 'ubuntu';
+      const actualPort = sshConfig?.port || 22;
+
+      // For SSH key, prefer: registry config > SSH config > default
+      let sshKeyPath;
+      if (server.ssh_key) {
+        // Registry explicitly specifies a key
+        sshKeyPath = this.resolveSSHKey(server.ssh_key);
+      } else if (sshConfig?.identityfile) {
+        // Use key from SSH config
+        sshKeyPath = sshConfig.identityfile;
+      } else {
+        // Fallback to default
+        sshKeyPath = this.resolveSSHKey(null);
+      }
+
+      this.log(`Using SSH key: ${sshKeyPath}`, 'debug');
+      this.log(`Connecting to ${actualUser}@${actualHostname}:${actualPort}`, 'debug');
+
       // Check if SSH key exists
       if (!fs.existsSync(sshKeyPath)) {
         throw new Error(`SSH key not found at: ${sshKeyPath}`);
       }
 
-      await this.ssh.connect({
-        host: server.hostname,
-        username: server.username || 'ubuntu', // Default to ubuntu
-        privateKeyPath: sshKeyPath,
-        readyTimeout: 30000 // 30 second timeout
-      });
+      // Check if we have a cached passphrase for this key
+      const cachedPassphrase = this.passphraseCache[sshKeyPath];
 
-      this.log(`Connected to ${server.hostname}`, 'success');
+      // Try connecting (with cached passphrase if available)
+      try {
+        const connectOptions = {
+          host: actualHostname,
+          username: actualUser,
+          port: actualPort,
+          privateKeyPath: sshKeyPath,
+          readyTimeout: 30000 // 30 second timeout
+        };
+
+        // Enable SSH agent forwarding if agent is available
+        if (process.env.SSH_AUTH_SOCK) {
+          connectOptions.agent = process.env.SSH_AUTH_SOCK;
+          connectOptions.agentForward = true;
+        }
+
+        if (cachedPassphrase) {
+          connectOptions.passphrase = cachedPassphrase;
+        }
+
+        await this.ssh.connect(connectOptions);
+
+        // Save current server for native SSH fallback
+        this.currentServer = server;
+
+        this.log(`Connected to ${server.hostname}`, 'success');
+      } catch (error) {
+        // Check if error is due to encrypted key
+        if (error.message && error.message.includes('Encrypted private') && error.message.includes('no passphrase')) {
+          this.log(`SSH key is encrypted, passphrase required`, 'warning');
+
+          // Prompt for passphrase
+          const answers = await inquirer.prompt([
+            {
+              type: 'password',
+              name: 'passphrase',
+              message: `Enter passphrase for SSH key (${path.basename(sshKeyPath)}):`,
+              mask: '*'
+            }
+          ]);
+
+          // Cache the passphrase
+          this.passphraseCache[sshKeyPath] = answers.passphrase;
+
+          // Retry with passphrase
+          const retryOptions = {
+            host: actualHostname,
+            username: actualUser,
+            port: actualPort,
+            privateKeyPath: sshKeyPath,
+            passphrase: answers.passphrase,
+            readyTimeout: 30000
+          };
+
+          // Enable SSH agent forwarding if agent is available
+          if (process.env.SSH_AUTH_SOCK) {
+            retryOptions.agent = process.env.SSH_AUTH_SOCK;
+            retryOptions.agentForward = true;
+          }
+
+          await this.ssh.connect(retryOptions);
+
+          // Save current server for native SSH fallback
+          this.currentServer = server;
+
+          this.log(`Connected to ${server.hostname}`, 'success');
+        } else {
+          throw error;
+        }
+      }
     } catch (error) {
       throw new Error(`Failed to connect to ${server.hostname}: ${error.message}`);
     }
@@ -92,7 +218,8 @@ class SSHDeployer {
   }
 
   /**
-   * Execute command on remote server
+   * Execute command on remote server using native SSH
+   * This ensures agent forwarding works correctly
    */
   async execCommand(command, options = {}) {
     this.log(`Executing: ${command}`, 'debug');
@@ -103,6 +230,36 @@ class SSHDeployer {
     }
 
     try {
+      // If we're connected via node-ssh, check if we should use native SSH instead
+      // Native SSH is more reliable for agent forwarding
+      if (this.useNativeSSH && this.currentServer) {
+        // Use native SSH with agent forwarding (-A)
+        const sshCommand = `ssh -A ${this.currentServer.hostname} '${command.replace(/'/g, "'\\''")}'`;
+
+        this.log(`Using native SSH: ${sshCommand}`, 'debug');
+
+        try {
+          const output = execSync(sshCommand, {
+            encoding: 'utf8',
+            stdio: ['inherit', 'pipe', 'pipe'],
+            maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+          });
+
+          return {
+            code: 0,
+            stdout: output,
+            stderr: ''
+          };
+        } catch (error) {
+          return {
+            code: error.status || 1,
+            stdout: error.stdout ? error.stdout.toString() : '',
+            stderr: error.stderr ? error.stderr.toString() : error.message
+          };
+        }
+      }
+
+      // Fallback to node-ssh
       const result = await this.ssh.execCommand(command, options);
 
       if (this.debug && result.stdout) {
@@ -133,7 +290,10 @@ class SSHDeployer {
   async cloneRepo(repo, branch, targetPath) {
     this.log(`Cloning ${repo} (branch: ${branch})...`, 'info');
 
-    const command = `git clone -b ${branch} ${repo} "${targetPath}"`;
+    // When using native SSH with -A, agent forwarding happens automatically
+    // We just need to tell git to accept new host keys
+    const command = `GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" git clone -b ${branch} ${repo} "${targetPath}"`;
+
     const result = await this.execCommand(command);
 
     if (result.code !== 0) {
@@ -149,9 +309,12 @@ class SSHDeployer {
   async pullRepo(repoPath, branch) {
     this.log(`Pulling latest changes (branch: ${branch})...`, 'info');
 
+    // When using native SSH with -A, agent forwarding happens automatically
+    const sshCommand = `GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"`;
+
     // Fetch and reset to latest
     const commands = [
-      `cd "${repoPath}" && git fetch origin`,
+      `cd "${repoPath}" && ${sshCommand} git fetch origin`,
       `cd "${repoPath}" && git checkout ${branch}`,
       `cd "${repoPath}" && git reset --hard origin/${branch}`
     ];
