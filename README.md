@@ -11,6 +11,7 @@ The Atom CLI is the companion tool for the [Atom.js Framework](https://github.co
 - **Service Communication Testing**: Send test signals between services
 - **Environment Management**: Start and orchestrate multiple services from configuration files
 - **Diagnostics**: Debug and troubleshoot Atom framework connectivity
+- **Deployment Management**: Deploy services to multiple products and servers from centralized YAML registry
 
 ## Architecture
 
@@ -120,6 +121,24 @@ This interactive tool allows you to:
 |---------|-------------|-------|
 | `-b, --broadcast <payload>` | Broadcast message to service | `atom -b @myapp/service:::topic:::{data}` |
 | `-d, --debug` | Enable debug output | `atom -d [command]` |
+
+### Deployment Commands (NEW)
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `-deploy --list` | List all deployments | `atom -deploy --list` |
+| `-deploy <service> --list` | Show where service is deployed | `atom -deploy auth-service --list` |
+| `-deploy --product <product> --list` | Show services for product | `atom -deploy --product wity --list` |
+| `-deploy <service> --product <product>` | Deploy service to product | `atom -deploy auth-service --product wity` |
+| `-deploy <service> --all` | Deploy to all products | `atom -deploy auth-service --all` |
+| `-deploy --product <product> --all-services` | Deploy all services | `atom -deploy --product wity --all-services` |
+
+**Deployment Flags:**
+- `--restart` - Restart service via PM2 after deployment
+- `--dry-run` - Preview deployment without executing
+- `--debug` - Show verbose SSH output
+
+**See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment documentation.**
 
 ## Detailed Usage
 

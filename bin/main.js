@@ -23,7 +23,15 @@ program
   .option(
     "-b, --broadcast <interface-payload>",
     "broadcast <interface>:::<payload> ( Eg format - `atom -b @flpl/devops:::GetIntro:::{}` )",
-  );
+  )
+  .option("-deploy [service]", "deploy service(s) to product(s)")
+  .option("--product <product>", "target product for deployment")
+  .option("--all", "deploy to all products")
+  .option("--all-services", "deploy all services for a product")
+  .option("--list", "list deployment information")
+  .option("--restart", "restart service after deployment using PM2")
+  .option("--dry-run", "show what would be deployed without executing")
+  .option("--parallel", "deploy to multiple servers in parallel");
 
 if (process.argv.length <= 2) {
   program.help();
@@ -98,4 +106,16 @@ if (program.broadcast) {
     program.opts().broadcast.toString(),
   );
   require("./commands/broadcast")(program.opts().broadcast.toString());
+}
+
+if (program.Deploy !== undefined) {
+  const opts = program.opts();
+
+  // Check if this is a list operation
+  if (opts.list) {
+    require("./commands/list_deployments")(program.Deploy, opts);
+  } else {
+    // This is a deployment operation
+    require("./commands/deploy_service")(program.Deploy, opts);
+  }
 }

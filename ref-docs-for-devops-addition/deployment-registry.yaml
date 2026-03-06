@@ -1,0 +1,145 @@
+# Deployment Registry
+# Central configuration for all services and products
+
+# Define all services
+services:
+  Mailer_MicroService:
+    repo: git@github.com:FootLooseLabs/Mailer_MicroService.git
+    branch: master
+
+  api-gateway-service:
+    repo: git@github.com:FootLooseLabs/api-gateway-service.git
+    branch: master
+
+  common-auditor-agent:
+    repo: git@github.com:FootLooseLabs/common-auditor-agent.git
+    branch: master
+
+  common_auth_agent:
+    repo: git@github.com:FootLooseLabs/common_auth_agent.git
+    branch: master
+
+  crm-proposal-manager:
+    repo: git@github.com:FootLooseLabs/crm-proposal-manager.git
+    branch: master
+
+  entity-lifecycle-manager:
+    repo: git@github.com:FootLooseLabs/entity-lifecycle-manager.git
+    branch: master
+
+  file_manager_utils:
+    repo: git@github.com:FootLooseLabs/file_manager_utils.git
+    branch: master
+
+  ideation-notes-manager:
+    repo: git@github.com:FootLooseLabs/ideation-notes-manager.git
+    branch: master
+
+  product-package-manager:
+    repo: git@github.com:FootLooseLabs/product-package-manager.git
+    branch: master
+
+  prompt-executor-agent:
+    repo: git@github.com:FootLooseLabs/prompt-executor-agent.git
+    branch: master
+
+  rtc-webrequest-handler:
+    repo: git@github.com:FootLooseLabs/rtc-webrequest-handler.git
+    branch: rpi
+
+  session-manager-agent:
+    repo: git@github.com:FootLooseLabs/session-manager-agent.git
+    branch: master
+
+  user-account-manager:
+    repo: git@github.com:FootLooseLabs/user-account-manager.git
+    branch: master
+
+  vritti-composer:
+    repo: git@github.com:FootLooseLabs/vritti-composer.git
+    branch: master
+
+  vritti-composer-export:
+    repo: git@github.com:FootLooseLabs/vritti-composer-export.git
+    branch: master
+
+  vritti-composer-journal:
+    repo: git@github.com:FootLooseLabs/vritti-composer-journal.git
+    branch: master
+
+  vritti-control-space-manager:
+    repo: git@github.com:FootLooseLabs/vritti-control-space-manager.git
+    branch: master
+
+  vritti-ideator:
+    repo: git@github.com:FootLooseLabs/vritti-ideator.git
+    branch: master
+
+  vritti-ideator-unrefined:
+    repo: git@github.com:FootLooseLabs/vritti-ideator-unrefined.git
+    branch: master
+
+  vritti-lifecycle-orchestrator:
+    repo: git@github.com:FootLooseLabs/vritti-lifecycle-orchestrator.git
+    branch: master
+
+  vritti-organizer:
+    repo: git@github.com:FootLooseLabs/vritti-organizer.git
+    branch: master
+
+  vritti-registry-manager:
+    repo: git@github.com:FootLooseLabs/vritti-registry-manager.git
+    branch: master
+
+  vritti-vectorizer:
+    repo: git@github.com:FootLooseLabs/vritti-vectorizer.git
+    branch: master
+
+  webhooks-manager:
+    repo: git@github.com:FootLooseLabs/webhooks-manager.git
+    branch: master
+
+  iden-engine-core:
+    repo: git@github.com:FootLooseLabs/iden-engine-core.git
+    branch: master
+
+# Define products and their infrastructure
+products:
+  wity:
+    servers:
+      - hostname: vritti-dev-server
+        path: /home/ubuntu/agents/
+    services:
+      - Mailer_MicroService
+      - api-gateway-service
+      - common-auditor-agent
+      - common_auth_agent
+      - crm-proposal-manager
+      - entity-lifecycle-manager
+      - file_manager_utils
+      - ideation-notes-manager
+      - product-package-manager
+      - prompt-executor-agent
+      - rtc-webrequest-handler
+      - session-manager-agent
+      - user-account-manager
+      - vritti-composer
+      - vritti-composer-export
+      - vritti-composer-journal
+      - vritti-control-space-manager
+      - vritti-ideator
+      - vritti-ideator-unrefined
+      - vritti-lifecycle-orchestrator
+      - vritti-organizer
+      - vritti-registry-manager
+      - vritti-vectorizer
+      - webhooks-manager
+
+  gcp-vritti-dogfooding:
+    servers:
+      - hostname: gcp-vritti-dogfooding
+        path: /home/ankur/agents/
+    services:
+      - common_auth_agent
+      - rtc-webrequest-handler
+      - iden-engine-core
