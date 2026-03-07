@@ -398,7 +398,7 @@ class SSHDeployer {
    */
   async deploy(target, options = {}) {
     const { server, serviceName, repo, branch, env } = target;
-    const { restart = false } = options;
+    const { restart = false, skipInstall = false } = options;
 
     const serviceDir = path.join(server.path, serviceName);
 
@@ -428,8 +428,12 @@ class SSHDeployer {
         await this.pullRepo(serviceDir, branch);
       }
 
-      // Install dependencies
-      await this.npmInstall(serviceDir);
+      // Install dependencies (unless skipped)
+      if (!skipInstall) {
+        await this.npmInstall(serviceDir);
+      } else {
+        this.log('Skipping npm install (--skip-install flag used)', 'info');
+      }
 
       // Write environment variables
       if (env && Object.keys(env).length > 0) {

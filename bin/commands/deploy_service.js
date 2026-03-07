@@ -16,6 +16,7 @@ async function deployService(serviceName, options) {
     all,
     allServices,
     restart = false,
+    skipInstall = false,
     dryRun = false,
     parallel = false,
     debug = false
@@ -113,7 +114,7 @@ async function deployService(serviceName, options) {
 
     // Execute deployments
     const deployer = new SSHDeployer({ debug, dryRun });
-    const results = await deployer.deployMultiple(targets, { restart });
+    const results = await deployer.deployMultiple(targets, { restart, skipInstall });
 
     // Print summary
     console.log('\n' + '='.repeat(60));

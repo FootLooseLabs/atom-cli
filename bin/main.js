@@ -102,6 +102,7 @@ program
   .option("--all-services", "deploy all services for a product")
   .option("--list", "list deployment information")
   .option("--restart", "restart service after deployment using PM2")
+  .option("--skip-install", "skip npm install (use when dependencies haven't changed)")
   .option("--dry-run", "show what would be deployed without executing")
   .option("--parallel", "deploy to multiple servers in parallel")
   .action((service, options) => {
