@@ -6,9 +6,9 @@ const SSHDeployer = require('../utils/sshDeployer');
  * Deploy service command handler
  *
  * Supported usage:
- * - atom -deploy <service> --product <product>
- * - atom -deploy <service> --all
- * - atom -deploy --product <product> --all-services
+ * - atom deploy <service> --product <product>
+ * - atom deploy <service> --all
+ * - atom deploy --product <product> --all-services
  */
 async function deployService(serviceName, options) {
   const {
@@ -30,9 +30,9 @@ async function deployService(serviceName, options) {
     if (!serviceName && !allServices) {
       console.error(chalk.red('Error: Must specify a service name or use --all-services'));
       console.log('\nUsage:');
-      console.log('  atom -deploy <service> --product <product>');
-      console.log('  atom -deploy <service> --all');
-      console.log('  atom -deploy --product <product> --all-services');
+      console.log('  atom deploy <service> --product <product>');
+      console.log('  atom deploy <service> --all');
+      console.log('  atom deploy --product <product> --all-services');
       process.exit(1);
     }
 

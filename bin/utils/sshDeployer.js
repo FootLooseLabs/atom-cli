@@ -306,11 +306,18 @@ class SSHDeployer {
   /**
    * Pull latest changes from git
    */
-  async pullRepo(repoPath, branch) {
+  async pullRepo(repoPath, branch, repo) {
     this.log(`Pulling latest changes (branch: ${branch})...`, 'info');
 
     // When using native SSH with -A, agent forwarding happens automatically
     const sshCommand = `GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"`;
+
+    // Ensure origin remote is set (in case it was manually cloned or remote was removed)
+    // This command will add origin if it doesn't exist, or update it if it does
+    const setOrigin = await this.execCommand(`cd "${repoPath}" && git remote set-url origin ${repo} 2>/dev/null || git remote add origin ${repo}`);
+    if (setOrigin.code !== 0) {
+      this.log('Warning: Could not set git origin, trying to continue anyway', 'warning');
+    }
 
     // Fetch and reset to latest
     const commands = [
@@ -425,7 +432,7 @@ class SSHDeployer {
       } else {
         // Pull latest changes
         this.log('Service found, updating to latest version...', 'info');
-        await this.pullRepo(serviceDir, branch);
+        await this.pullRepo(serviceDir, branch, repo);
       }
 
       // Install dependencies (unless skipped)

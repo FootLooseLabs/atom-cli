@@ -1,24 +1,25 @@
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const DeploymentRegistry = require('../utils/yamlParser');
+const { execSync } = require('child_process');
 
 /**
  * Registry management command handler
  *
  * Supported operations:
- * - atom -registry list [--services|--products]
- * - atom -registry search <keyword>
- * - atom -registry show <name>
- * - atom -registry add-service <name> --repo <url> --branch <branch>
- * - atom -registry add-product <name> --server <host> --path <path>
- * - atom -registry link <service> --product <product>
- * - atom -registry unlink <service> --product <product>
- * - atom -registry remove-service <name>
- * - atom -registry remove-product <name>
- * - atom -registry update-service <name> --repo|--branch <value>
- * - atom -registry update-product <name> --server <host> --path <path>
- * - atom -registry autoprepare [--product <product>]
- * - atom -registry ap [--product <product>] (shorthand)
+ * - atom registry list [--services|--products]
+ * - atom registry search --keyword <keyword>
+ * - atom registry show --name <name>
+ * - atom registry add-service --name <name> --repo <url> --branch <branch>
+ * - atom registry add-product --name <name> --server <host> --path <path>
+ * - atom registry link --service <service> --product <product>
+ * - atom registry unlink --service <service> --product <product>
+ * - atom registry remove-service --name <name>
+ * - atom registry remove-product --name <name>
+ * - atom registry update-service --name <name> --repo|--branch <value>
+ * - atom registry update-product --name <name> --server <host> --path <path>
+ * - atom registry autoprepare [--product <product>]
+ * - atom registry ap [--product <product>] (shorthand)
  */
 async function manageRegistry(operation, options) {
   try {
@@ -74,6 +75,14 @@ async function manageRegistry(operation, options) {
 
       case 'update-product':
         await handleUpdateProduct(registry, options);
+        break;
+
+      case 'path':
+        handlePath(registry, options);
+        break;
+
+      case 'edit':
+        handleEdit(registry, options);
         break;
 
       default:
@@ -138,7 +147,7 @@ function handleSearch(registry, options) {
 
   if (!keyword) {
     console.error(chalk.red('Error: Missing search keyword'));
-    console.log('Usage: atom -registry search <keyword>');
+    console.log('Usage: atom registry search <keyword>');
     process.exit(1);
   }
 
@@ -181,8 +190,11 @@ function handleShow(registry, options) {
   const name = options.name;
 
   if (!name) {
-    console.error(chalk.red('Error: Missing name'));
-    console.log('Usage: atom -registry show <service-or-product>');
+    console.error(chalk.red('Error: Missing --name flag'));
+    console.log('Usage: atom registry show --name <service-or-product>');
+    console.log('\nExamples:');
+    console.log('  atom registry show --name common_auth_agent');
+    console.log('  atom registry show --name wity');
     process.exit(1);
   }
 
@@ -252,13 +264,13 @@ async function handleAddService(registry, options) {
 
   if (!serviceName) {
     console.error(chalk.red('Error: Missing service name'));
-    console.log('Usage: atom -registry add-service <name> --repo <url> --branch <branch>');
+    console.log('Usage: atom registry add-service <name> --repo <url> --branch <branch>');
     process.exit(1);
   }
 
   if (!repo || !branch) {
     console.error(chalk.red('Error: Missing --repo or --branch'));
-    console.log('Usage: atom -registry add-service <name> --repo <url> --branch <branch>');
+    console.log('Usage: atom registry add-service <name> --repo <url> --branch <branch>');
     process.exit(1);
   }
 
@@ -291,13 +303,13 @@ async function handleAddProduct(registry, options) {
 
   if (!productName) {
     console.error(chalk.red('Error: Missing product name'));
-    console.log('Usage: atom -registry add-product <name> --server <host> --path <path>');
+    console.log('Usage: atom registry add-product <name> --server <host> --path <path>');
     process.exit(1);
   }
 
   if (!server || !path) {
     console.error(chalk.red('Error: Missing --server or --path'));
-    console.log('Usage: atom -registry add-product <name> --server <host> --path <path>');
+    console.log('Usage: atom registry add-product <name> --server <host> --path <path>');
     process.exit(1);
   }
 
@@ -341,7 +353,7 @@ async function handleLink(registry, options) {
 
   if (!serviceName || !productName) {
     console.error(chalk.red('Error: Missing service or product'));
-    console.log('Usage: atom -registry link <service> --product <product>');
+    console.log('Usage: atom registry link <service> --product <product>');
     process.exit(1);
   }
 
@@ -372,7 +384,7 @@ function handleUnlink(registry, options) {
 
   if (!serviceName || !productName) {
     console.error(chalk.red('Error: Missing service or product'));
-    console.log('Usage: atom -registry unlink <service> --product <product>');
+    console.log('Usage: atom registry unlink <service> --product <product>');
     process.exit(1);
   }
 
@@ -388,7 +400,7 @@ async function handleRemoveService(registry, options) {
 
   if (!serviceName) {
     console.error(chalk.red('Error: Missing service name'));
-    console.log('Usage: atom -registry remove-service <name>');
+    console.log('Usage: atom registry remove-service <name>');
     process.exit(1);
   }
 
@@ -418,7 +430,7 @@ async function handleRemoveProduct(registry, options) {
 
   if (!productName) {
     console.error(chalk.red('Error: Missing product name'));
-    console.log('Usage: atom -registry remove-product <name>');
+    console.log('Usage: atom registry remove-product <name>');
     process.exit(1);
   }
 
@@ -449,7 +461,7 @@ async function handleUpdateService(registry, options) {
 
   if (!serviceName) {
     console.error(chalk.red('Error: Missing service name'));
-    console.log('Usage: atom -registry update-service <name> --repo <url> --branch <branch>');
+    console.log('Usage: atom registry update-service <name> --repo <url> --branch <branch>');
     process.exit(1);
   }
 
@@ -492,7 +504,7 @@ async function handleUpdateProduct(registry, options) {
 
   if (!productName) {
     console.error(chalk.red('Error: Missing product name'));
-    console.log('Usage: atom -registry update-product <name> --server <host> --path <path>');
+    console.log('Usage: atom registry update-product <name> --server <host> --path <path>');
     process.exit(1);
   }
 
@@ -547,43 +559,93 @@ function showHelp() {
 ${chalk.bold('Registry Management Commands:')}
 
 ${chalk.cyan('Auto-Prepare (NEW):')}
-  atom -registry autoprepare [--product <name>] \\
+  atom registry autoprepare [--product <name>] \\
     [--git-remote <remotes>]                       Auto-discover running services & update registry
-  atom -registry ap [--product <name>]            (shorthand for autoprepare)
+  atom registry ap [--product <name>]            (shorthand for autoprepare)
 
   Options:
     --product <name>        Also create/update product for this machine
     --git-remote <remotes>  Git remote preference (e.g. upstream,origin)
 
 ${chalk.cyan('List & Search:')}
-  atom -registry list                              List summary
-  atom -registry list --services                   List all services
-  atom -registry list --products                   List all products
-  atom -registry search <keyword>                  Search registry
-  atom -registry show <name>                       Show service or product details
+  atom registry list                              List summary
+  atom registry list --services                   List all services
+  atom registry list --products                   List all products
+  atom registry search <keyword>                  Search registry
+  atom registry show <name>                       Show service or product details
 
 ${chalk.cyan('Add:')}
-  atom -registry add-service <name> \\
+  atom registry add-service <name> \\
     --repo <git-url> --branch <branch>             Add new service
 
-  atom -registry add-product <name> \\
+  atom registry add-product <name> \\
     --server <hostname> --path <path>              Add new product
 
 ${chalk.cyan('Link/Unlink:')}
-  atom -registry link <service> --product <product>    Link service to product
-  atom -registry unlink <service> --product <product>  Unlink service from product
+  atom registry link <service> --product <product>    Link service to product
+  atom registry unlink <service> --product <product>  Unlink service from product
 
 ${chalk.cyan('Remove:')}
-  atom -registry remove-service <name>             Remove service
-  atom -registry remove-product <name>             Remove product
+  atom registry remove-service <name>             Remove service
+  atom registry remove-product <name>             Remove product
 
 ${chalk.cyan('Update:')}
-  atom -registry update-service <name> \\
+  atom registry update-service <name> \\
     [--repo <url>] [--branch <branch>]             Update service config
 
-  atom -registry update-product <name> \\
+  atom registry update-product <name> \\
     [--server <host>] [--path <path>]              Update product config
 `);
+}
+
+/**
+ * Show registry file path
+ */
+function handlePath(registry, options) {
+  const registryPath = registry.registryPath;
+
+  console.log(chalk.bold('\nDeployment Registry Path:\n'));
+  console.log(chalk.cyan(registryPath));
+
+  // Check if using environment variable
+  if (process.env.ATOM_REGISTRY_PATH) {
+    console.log(chalk.gray(`\n(Using ATOM_REGISTRY_PATH environment variable)`));
+  } else {
+    console.log(chalk.gray(`\n(Using default path)`));
+  }
+
+  // Check if file exists
+  const fs = require('fs');
+  if (fs.existsSync(registryPath)) {
+    console.log(chalk.green(`\n✓ File exists`));
+  } else {
+    console.log(chalk.red(`\n✗ File not found`));
+  }
+
+  console.log(chalk.gray(`\nTo use a custom path, set: export ATOM_REGISTRY_PATH=/path/to/registry.yaml`));
+  console.log('');
+}
+
+/**
+ * Open registry file in editor
+ */
+function handleEdit(registry, options) {
+  const registryPath = registry.registryPath;
+
+  console.log(chalk.bold(`Opening registry file: ${registryPath}\n`));
+
+  // Determine editor to use (in order of preference)
+  const editor = process.env.VISUAL || process.env.EDITOR || 'nano';
+
+  try {
+    execSync(`${editor} "${registryPath}"`, { stdio: 'inherit' });
+    console.log(chalk.green('\n✓ Registry file closed'));
+    console.log(chalk.yellow('\nRecommendation: After manual edits, verify with: atom registry list'));
+  } catch (error) {
+    console.error(chalk.red(`\nError opening editor: ${error.message}`));
+    console.log(chalk.gray(`\nTry setting EDITOR environment variable: export EDITOR=vim`));
+    console.log(chalk.gray(`Or manually edit: ${registryPath}`));
+  }
 }
 
 module.exports = manageRegistry;

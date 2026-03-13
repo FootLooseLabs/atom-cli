@@ -332,6 +332,28 @@ registry
     });
   });
 
+// registry path
+registry
+  .command("path")
+  .description("Show the registry file path")
+  .action(() => {
+    const globalOpts = program.opts();
+    require("./commands/manage_registry")("path", {
+      debug: globalOpts.debug
+    });
+  });
+
+// registry edit
+registry
+  .command("edit")
+  .description("Open registry file in default editor")
+  .action(() => {
+    const globalOpts = program.opts();
+    require("./commands/manage_registry")("edit", {
+      debug: globalOpts.debug
+    });
+  });
+
 // Process lifecycle hooks
 process.on("exit", function () {
   // console.log('process killing');
