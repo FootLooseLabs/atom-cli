@@ -201,8 +201,16 @@ class DeploymentRegistry {
       serviceName,
       productName,
       server,
+      // Deploy strategy: defaults to 'atom-service' (git pull + npm + pm2) so any
+      // service without an explicit `type` behaves exactly as before (non-regressive).
+      type: service.type || 'atom-service',
       repo: service.repo,
       branch: service.branch,
+      // static-rsync strategy fields (ignored by atom-service):
+      source: service.source,
+      targetPath: service.target_path,
+      localRoot: service.local_root,
+      postDeploy: service.post_deploy,
       env: this.getEnvironmentForService(serviceName, productName)
     }));
   }

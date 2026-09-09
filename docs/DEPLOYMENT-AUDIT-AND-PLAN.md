@@ -81,16 +81,36 @@ dated 2026-09-09, or regenerate — commands in "How to re-verify" below.)
 
 ---
 
+## Strategy architecture (implemented P3) — separation of concerns
+- **Orchestration** `bin/commands/deploy_service.js` — which services→servers, plan, summary.
+- **Strategy dispatch** `bin/strategies/index.js` — groups targets by `type`, runs each strategy, merges results.
+- **Strategies** `bin/strategies/*.js` — HOW a target of a given `type` is deployed:
+  - `atom-service` (DEFAULT) — git pull + npm + pm2; delegates to unchanged `SSHDeployer.deployMultiple` (zero-regression).
+  - `static-rsync` — `rsync -az --delete -e ssh` a locally-built artifact dir → served path; optional `post_deploy` hook.
+- **Transport** `bin/utils/sshDeployer.js` — SSH connect/exec.
+Registry schema for static: `type: static-rsync`, `source: dist/`, `target_path: …`,
+`local_root: …` (optional), `post_deploy: [...]` (optional). Services without `type`
+default to `atom-service` → byte-identical old behavior.
+
 ## Hardening plan (phased, non-regressive)
 - **P0 ✅** read-only audit + this doc.
-- **P1** reconcile dual registry → CLI reads ONE canonical file; fix the 2 wrong repos
-  + 1 wrong target. Verify each with `--dry-run` (no real deploy).
-- **P2** additive CLI: `describe`, `--status` (live SHA per server vs origin), `--from-local`
-  (rsync working tree = preserves today's behavior), safer `--dry-run`.
-- **P3** add **rsync/static deploy method** (for hais-*/comm frontends).
-- **P4** populate registry to full coverage + canonical ids; set the 9 missing git origins.
+- **P1 ~** reconcile registry: **Decision 1 DONE** (all github; fixed common_auth_agent
+  bitbucket→github). **Decision 2 PENDING**: session-manager-agent target (add gcp product).
+  Note: authoritative registry = envs file via ATOM_REGISTRY_PATH; `bin/config` is a stale
+  template (sync or mark non-authoritative — still TODO).
+- **P2 ✅** additive read-only CLI: `--describe`, `--status` (live SHA/branch/dirty/pm2 per server).
+  TODO later: `--from-local`, safer `--dry-run`.
+- **P3 ✅** typed strategy pattern + `static-rsync` (frontends). Both strategies verified via dry-run.
+- **P4** populate registry to full coverage (add ~15 missing agents, ~35 frontends as static-rsync,
+  jity/wity-mcp) + canonical ids; set the 9 missing git origins.
 - **P5** health-check gating + rollback (git SHA pin, keep previous) — flag-guarded.
 - **P6** MCP wrapper (agent-driven deploy/list/status).
+
+## KNOWN LIMITATION (pre-existing, affects real deploys)
+Passphrase-encrypted SSH keys (e.g. gcp box's `id_gcp_vritti_dogfooding`) make
+`SSHDeployer`'s inquirer passphrase prompt BLOCK in non-interactive use → any real
+`atom deploy`/`--status` to such a server hangs. Workaround: `ssh-add` the key
+(ssh-agent) first. Proper fix (later): SSHDeployer should use the agent / non-blocking.
 
 ## Non-regression invariants (NEVER violate)
 1. Per-project `npm run deploy-staging`/`deploy` scripts remain the working path throughout.

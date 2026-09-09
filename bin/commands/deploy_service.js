@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 const DeploymentRegistry = require('../utils/yamlParser');
-const SSHDeployer = require('../utils/sshDeployer');
+const { deployTargets } = require('../strategies');
 
 /**
  * Deploy service command handler
@@ -101,10 +101,10 @@ async function deployService(serviceName, options) {
       process.exit(0);
     }
 
-    // Show deployment plan
+    // Show deployment plan (now includes the strategy type per target)
     console.log(chalk.bold('Deployment Plan:'));
     targets.forEach((target, idx) => {
-      console.log(`  ${idx + 1}. ${chalk.cyan(target.serviceName)} → ${chalk.green(target.server.hostname)} (${target.server.path})`);
+      console.log(`  ${idx + 1}. ${chalk.cyan(target.serviceName)} [${target.type || 'atom-service'}] → ${chalk.green(target.server.hostname)} (${target.targetPath || target.server.path})`);
     });
     console.log('');
 
@@ -112,9 +112,9 @@ async function deployService(serviceName, options) {
       console.log(chalk.yellow('[DRY RUN] No actual deployment will be performed\n'));
     }
 
-    // Execute deployments
-    const deployer = new SSHDeployer({ debug, dryRun });
-    const results = await deployer.deployMultiple(targets, { restart, skipInstall });
+    // Execute via the strategy dispatcher (atom-service | static-rsync | ...).
+    // atom-service delegates to the unchanged SSHDeployer.deployMultiple path.
+    const results = await deployTargets(targets, { restart, skipInstall, dryRun, debug });
 
     // Print summary
     console.log('\n' + '='.repeat(60));
