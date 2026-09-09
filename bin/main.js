@@ -101,6 +101,8 @@ program
   .option("--all", "deploy to all products")
   .option("--all-services", "deploy all services for a product")
   .option("--list", "list deployment information")
+  .option("--describe", "show full deployment identity of a service (read-only)")
+  .option("--status", "show live deployed git SHA/branch/pm2 per server (read-only)")
   .option("--restart", "restart service after deployment using PM2")
   .option("--skip-install", "skip npm install (use when dependencies haven't changed)")
   .option("--dry-run", "show what would be deployed without executing")
@@ -109,8 +111,12 @@ program
     const globalOpts = program.opts();
     if (globalOpts.debug) console.log({ service, options });
 
-    // Check if this is a list operation
-    if (options.list) {
+    // Read-only inspection operations (never deploy)
+    if (options.describe) {
+      require("./commands/describe_service")(service, { ...options, debug: globalOpts.debug });
+    } else if (options.status) {
+      require("./commands/status_service")(service, { ...options, debug: globalOpts.debug });
+    } else if (options.list) {
       require("./commands/list_deployments")(service, {
         ...options,
         debug: globalOpts.debug
